@@ -1,0 +1,275 @@
+---
+title: "Wykład I - Kilka przydatnych uwag o R"
+author: "Mateusz Sobieraj"
+date: "4 lutego 2017"
+encoding: "UTF-8"
+output: 
+  ioslides_presentation:
+    css: dependencies/styles.css
+    logo: dependencies/grosz.png
+    
+---
+
+
+## skróty klawiszowe I
+
+- `F1 (kursor na funkcji)` - wyświetlenie pomocy
+- `F2 (kursor na funkcji)` - wyświetlenie kodu funkcji 
+- `Crtl + Enter` - wykonanie linii/fragmentu kodu
+- `Crtl + Shift + R` - wykonanie całego skryptu
+- `Crtl + Shift + K` - stworzenie dokumentu `rmarkdown`
+- `Crtl + Shift + Enter ` - wykonanie fragmentu kodu w `rmarkdown`
+- `Ctrl + Shift + C` - za komentowanie / od komentowanie linii lub zaznaczonego obszaru
+- `Alt + -` - wstawienie strzałki przypisania `<-`
+
+## skróty klawiszowe II
+
+- `Crtl + 1` / `Crtl + 2` przejście do skryptu/konsoli
+- `Crtl + l` - czyszczenie konsoli
+- `Tab` - podczas pisania funkcji podpowiedź
+- `Tab` - podczas wpisywania argumentów podpowiedź
+- `Tab` - podczas gdy zaznaczone jest kilka linii, dodanie wcięcia
+- `Tab + Shift` - podczas gdy zaznaczone jest kilka linii, usunięcie wcięcia
+
+## Ściągi 
+
+[https://www.rstudio.com/resources/cheatsheets/](https://www.rstudio.com/resources/cheatsheets/)
+
+### przykładowe 
+
+- [import danych](dependencies/data-import-cheatsheet.pdf)
+- [transformacja danych](dependencies/data-transformation-cheatsheet.pdf)
+- [wizualizacja danych](dependencies/ggplot2-cheatsheet-2.1.pdf)
+- [rmardown](dependencies/rmarkdown-cheatsheet-2.0.pdf)
+
+## Przetwarzanie danych z [dplyr](https://cran.r-project.org/web/packages/dplyr/dplyr.pdf) 
+
+Pakiet `dplyr` służy  do przetwarzania danych w podobnym stylu jak robimy to na bazie za pomocą `SQL`, ponad to implementuje przydatny operator `%>%` służący do przetwarzania potokowego.
+
+## Odpowiedniki `SQL`
+
+- `filter()` - odpowiednik `WHERE`, filtruje wiersze
+- `mutate()` - odpowiednik `SELECT *, `, tworzy nowe kolumny
+- `select()` - odpowiednik `SELECT`, filtruje kolumny
+- `arrange()` - odpowiednik `ORDER BY`, sortuje
+- `summarise()` - odpowiednik funkcji agregujących bez `GROUP BY`
+- `group_by()` - odpowiednik `GROUP BY`
+- `inner_join()` - odpowiednik `INNER JOIN`
+- `left_join()` - odpowiednik `LEFT JOIN`
+- `intersect()` - odpowiednik `INTERSECT`
+- `union()` - odpowiednik `UNION`
+
+## Praca z pakietem `dplyr`
+
+Funkcjie `filter`, `mutate`, `select`, `arrange`, `summarise`, `group_by` przyjmują jako pierwszy argument ramkę danych.
+
+Funkcje `_join`, jako pierwsze dwa argumenty przyjmują ramki danych które chcemy ze sobą połączyć, jako trzeci argument przyjmują warunek logiczny (odpowiednik tego co w `SQL` wpisujemy po słowie kluczowym `ON`).
+
+Operator `x %>% y` przekazuje  wartość zwróconą w `x` jako pierwszy argument `y`. Będziemy go stosować w poniższych przykładach.
+
+Pokarzemy przykładowe użycie powyższych funkcji na przykładzie zbioru danych [iris](https://en.wikipedia.org/wiki/Iris_flower_data_set).
+
+## Rzut oka na dane
+
+Przygotowanie danych do dalszej pracy
+```{r required_packages, include=FALSE, eval=TRUE}
+require('dplyr')
+require('tidyr')
+#options(encoding = 'UTF-8')
+```
+
+```{r data_preparation}
+dt <- iris
+summary(dt)
+```
+
+## Funkcja `filter()`
+
+```{r filter_data}
+dt_filter <- dt %>% filter(Species %in% c("setosa", "versicolor"),
+                           Sepal.Width > 3.300)
+summary(dt_filter)
+```
+
+## Funkcja `mutate()`
+
+```{r mutate_data}
+dt_mutate <- dt %>% mutate(Petal_ratio = Petal.Length / Petal.Width,
+                           is_height = ifelse(Sepal.Length >= 6.4, 
+                                              'YES', 
+                                              'NO')
+                           )
+head(dt_mutate)
+```
+
+## Funkcja `select()`
+W funkcji select przed argumentem można stawiać znak `-` co powoduje, że ta kolumna nie będzie wyświetlana. 
+
+```{r select_data}
+dt_select <- dt %>% select(-Petal.Length, -Petal.Width)
+
+head(dt_select)
+```
+## Funkcja `arrange()`
+```{r arrange_data}
+dt_arrange <- dt %>% arrange(Sepal.Length, desc(Petal.Length))
+
+head(dt_arrange)
+```
+## Funkcja `summarise()`
+```{r summarise_data}
+dt_summarise <- dt %>% 
+  summarise(row_number = n(),
+            avg_sepal_length = mean(Sepal.Length),
+            sd_sepal_length = sd(Sepal.Length),
+            md_petal_length = median(Petal.Length)
+            )
+
+dt_summarise
+```
+## Funkcja `group_by()`
+```{r group_by_data}
+dt_group_by  <- dt %>%
+  group_by(Species) %>%
+  summarise(row_number = n(),
+          avg_sepal_length = mean(Sepal.Length),
+          sd_sepal_length = sd(Sepal.Length),
+          md_petal_length = median(Petal.Length)
+          )
+
+dt_group_by
+```
+## Wszystko na raz 
+```{r all_operations_data}
+dt_all <- dt  %>%  # FROM
+  filter(Sepal.Width > 2.8, Petal.Length < 5.1) %>%  # WHERE
+  group_by(Species) %>%   
+  summarise(row_number = n(),
+        avg_sepal_length = mean(Sepal.Length),
+        md_petal_length = median(Petal.Length)
+        ) %>%  # GROUP BY
+  filter(md_petal_length < 4.8) %>%  # HAVING
+  select(Species, row_number, avg_sepal_length) %>%  # SELECT
+  arrange(avg_sepal_length) # ORDER BY
+
+dt_all
+
+```
+## Funkcja `inner_join()`
+```{r join_data}
+df1 <- data.frame(id1 = sample(1:3, 100, replace = TRUE),
+                  norm = rnorm(100))
+df2 <- data.frame(id2 = sample(1:3, 100, replace = TRUE),
+                  unif = runif(100))
+
+df_join <- inner_join(df1, df2, by = c("id1" = "id2"))
+head(df_join)
+
+```
+
+## tabele przestawne z [tidyr](https://cran.r-project.org/web/packages/tidyr/tidyr.pdf)
+
+Pakiet `tidyr` służy do przetwarzania kolumn z formatu wąskiego na szeroki i odwrotnie.
+
+- `gather()` -  bierze wiele kolumn i łączy je w pary klucz-wartość, przekształcenie szerokiego formatu w wąski
+- `spread()` - bierze dwie kolumny (klucz i wartość) i rozbija je na wiele kolunm, przekształcenie wąskiego formatu na szeroki 
+- `separate()` - rozbija jedną kolumnę na wiele
+- `unite()` - łączy kilka kolumn w jedną 
+
+## Rzut oka na dane [hsb2](http://www.philender.com/courses/762/notes1/about_hsb2.html)
+
+Przygotowanie danych do dalszej pracy
+
+```{r data_preparation2}
+hsb2 <- read.table('dependencies/hsb2.csv', 
+                   header = T, sep = ",")
+
+head(hsb2)
+```
+
+## Funkcja `gather()`
+
+Funkcja `gather` służy przekształca tabele, która jest w szerokim formacie na wąski. Konstrukcja funkcji jest następująca: `gather(data, key, value, ..., na.rm = FALSE, convert = FALSE)` gdzie:
+
+- `key` - nazwa kolumny reprezentująca nową zmienną
+- `value` - nazwa kolumny reprezentująca wartości zmiennej
+- `...` - nazwy kolumn do złączenia
+- `convert` - jeżeli `TRUE` to konwertuje na wartość logiczną, integer, numeric itp.
+
+## Funkcja `gather()` II
+
+```{r tidyr_gather}
+long_hsb2 <- hsb2 %>%
+  gather(Category,Score,
+         read, write, math, science, socst)
+# równowazne polecenia
+#  gather(Category, Score, read:socst)
+#  gather(Category, Score, 7:11)
+#  gather(Category, Score, -id, -female, -race, -ses, -schtyp, -prog)
+
+head(long_hsb2)
+```
+
+## Funkcja `spread()`
+
+Funkcja `spread` ma następującą konstrukcję `spread(data, key, value, fill = NA, convert = FALSE)`, gdzie:
+
+- `key` - nazwa kolumny, która ma zostać zamieniona na na nazwy nowych kolumn
+- `value` - wartości w nowych kolumnach 
+- `fill` - wartości do podstawienia jeżeli nie ma odpowiednich wartości
+- `convert` - jeżeli TRUE to konwertuje na wartość logiczną, integer, numeric itp.
+
+## Funkcja `spread()` II
+
+```{r tidyr_spread}
+wide_hsb2 <- long_hsb2 %>%
+  spread(Category,Score)
+
+head(wide_hsb2)
+```
+
+## Funkcja `separate()`
+
+Funkcja `separate` ma następującą konstrukcję `separate(data, col, into, sep = " ", remove = TRUE, convert = FALSE)`, gdzie:
+
+- `col` - nazwa kolumny, którą chcemy podzielić
+- `into` - nowe nazwy kolumn 
+- `sep` - jaki separator 
+- `remove` - jeżeli `TRUE` usunąć istniejącą kolumnę
+- `convert` - jeżeli `TRUE` to konwertuje na wartość logiczną, integer, numeric itp.
+
+## Funkcja `separate()` II
+
+```{r tidyr_separate}
+df <- data.frame(id = 1:100, data = "1991-11-24")
+
+head(df)
+```
+
+## Funkcja `separate()` III
+
+```{r tidyr_separateII}
+df_sep <- df %>%
+  separate(data, c("Year", "month", "day"), sep = "-")
+
+head(df_sep)
+```
+
+## Funkcja `unite()`
+
+Funkcja `unite` ma następującą konstrukcję `unite(data, col, ..., sep = " ", remove = TRUE)`, gdzie:
+
+- `col` - nazwa nowej złączonej kolumny 
+- `...` - nazwy kolumn do złączenia
+- `sep` - separator rozdzielający złączone dane 
+- `remove` - jeżeli `TRUE` usunąć istniejące kolumny
+
+## Funkcja `unite()` II
+
+```{r tidyr_unite}
+df_marge <- df_sep %>%
+  unite(date, Year, month, day, sep = '-')
+
+head(df_marge)
+```
+
