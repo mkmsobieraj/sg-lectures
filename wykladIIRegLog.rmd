@@ -1,0 +1,49 @@
+---
+title: "Wykład II - Regresja logistyczna w R"
+author: "Mateusz Sobieraj"
+date: "13 marca 2017"
+encoding: "UTF-8"
+output: 
+  ioslides_presentation:
+  css: dependencies/styles.css
+logo: dependencies/grosz.png
+
+---
+
+## Plan wykładu
+  
+- przypomnienie teorii
+- regresja logistyczna w R
+  
+## Oznaczenia
+
+W dalszej części wykłady będziemy przyjmować następujące oznaczenia:
+
+- $Y_i$ - zmienna objaśniana dla i-tej próby (przyjmuje tylko wartości 0 i 1)
+- $p_i$ - prawdopodobieństwo sukcesu dla i-tej próby (szukana wartość)
+- $X$ - wektor zmiennych objśniających
+- $E$ - wartość oczekiwana 
+
+## Przypomnienie 
+
+##### Założenie
+
+Regresja logistyczna zakłada, że $Y_i$ ma rozkład Beornuliego:
+  $$
+  Y_i \sim B(p_i, 1)
+  $$
+
+###### Wnioski
+
+1. $E(Y_i|X = x) = p_i$
+2. $P(Y_i = y | X =x) = p_i^y(1 - p_i)^{(1-y)}$
+
+##### Dowód
+
+1. $E(Y_i|X = x) = P(Y_i = 1) * 1 + P(Y_i = 0) * 0 = P(Y_i = 1) = p_i$
+2. $P(Y_i = 1 | X =x) = p_i^1 (1 - p_i)^{(1 - 1)} = p_i$
+   $P(Y_i = 0 | X =x) = p_i^0 (1 - p_i)^{(1 - 0)} = 1 - p_i$
+
+
+
+
