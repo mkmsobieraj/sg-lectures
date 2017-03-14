@@ -23,6 +23,7 @@ W dalszej części wykłady będziemy przyjmować następujące oznaczenia:
 - $p_i$ - prawdopodobieństwo sukcesu dla i-tej próby (szukana wartość)
 - $X$ - wektor zmiennych objśniających
 - $E$ - wartość oczekiwana 
+- $Odds$ - Szansa $\frac{p}{1 - p}$
 
 ## Przypomnienie 
 
@@ -30,20 +31,100 @@ W dalszej części wykłady będziemy przyjmować następujące oznaczenia:
 
 Regresja logistyczna zakłada, że $Y_i$ ma rozkład Beornuliego:
   $$
-  Y_i \sim B(p_i, 1)
+  Y_i| X = x \sim B(p_i, 1)
   $$
 
-###### Wnioski
+#### Wniosek 
 
-1. $E(Y_i|X = x) = p_i$
+1. $E(Y_i|X = x) = p_i$ (dzięki temu regresja logistyczna działa!)
 2. $P(Y_i = y | X =x) = p_i^y(1 - p_i)^{(1-y)}$
 
-##### Dowód
+#### Dowód 
 
 1. $E(Y_i|X = x) = P(Y_i = 1) * 1 + P(Y_i = 0) * 0 = P(Y_i = 1) = p_i$
 2. $P(Y_i = 1 | X =x) = p_i^1 (1 - p_i)^{(1 - 1)} = p_i$
    $P(Y_i = 0 | X =x) = p_i^0 (1 - p_i)^{(1 - 0)} = 1 - p_i$
 
+## Dlaczogo funkcja logit?
+
+Chcemy stworzyć model który powie nam czy pod warunkiem $X = x_i$ realizacja zmiennej $Y$ zakończy się sukcesem (1) czy porażkom (0). Nie wiemy jak to zrobić ale jesteśmy całkiem nieźli w modelach liniowych ;) .
+
+Tworzymy zatem model liniowy 
+
+$$ Y_i = \beta X_i $$
+Jest prawie dobrze ale $Y_i$ jako kombinacja liniowa zmiennych, które przeważnie nie są ograniczone, może przyjąć dowolnie duże (małe) wartości, w szczegulności różne od $\{0, 1\}$ .  
+
+## Dlaczogo funkcja logit? II
+
+Nic straconego!!! W liceum poznaliśmy funkcje monotoniczne, użyjmy ich! 
+
+$$
+f(x) = \{
+ \begin{array}{cc}
+1 & jeżeli \ x > 0.5  \\
+0 & jeżeli \ x < 0.5
+\end{array}
+$$
+```{r required_packages, include=FALSE, eval=TRUE}
+require('ggplot2')
+```
+
+```{r ex_function, echo=FALSE, fig.height=3.5}
+x <- seq(-10, 10, by = 0.1)
+f_x <- ifelse(x > 0, 1, 0)
+dt1 <- data.frame(x_val = x, y_val = f_x)
+ggplot(data = dt1, aes(x_val, y_val)) + geom_point(colour = "#56B4E9")
+```
+
+## Dlaczogo funkcja logit? III
+
+udało się! wystarczy przyłożyć funkcję $f$ do prawej strony róWnania 
+$$ Y_i = \beta X_i $$
+
+i otrzymujemy 
+
+$$ Y_i = f(\beta X_i) = \{
+ \begin{array}{cc}
+1 & jeżeli \ \beta X_i > 0.5  \\
+0 & jeżeli \ \beta X_i < 0.5
+\end{array} $$
+
+## Dlaczogo funkcja logit? IV
+
+#### Problemy 
+
+- co gdy $\beta X_i = 0.5$ (z tym łątwo sobie poradzić zmieniając jedną z nierówności na słabom)
+- funkcja jest nieciągła i nieróżniczkowalna co sprawia wiele problemów formalnych 
+- funkcja jest idelana do problemów liniowo separowalnych to co tak napradę zrobiliśmy to poprowadziliśmy ortogonalną hiperpłaszczyznę do hiperpłaszczyzny regresyjnej i powiedzieliśmy wszystko z jednej strony jest sukcesem a z drugiej poraszką, jednak w żeczywistości mało który problem jest liniowo separowalny.  
+
+## Dlaczogo funkcja logit? V
+```{r ex_function2, echo=FALSE}
+dt2 <- data.frame(x = seq(-10, 10, by = 0.1), y = seq(-10, 10, by = 0.1) * 0.2)
+ggplot(data = dt2, aes(x = x, y = y)) + geom_point(colour = "#56B4E9") +
+  geom_abline(slope = -0.2, colour = '#906060')
+
+```
+
+## Dlaczogo funkcja logit? V
+
+#### Definicja (Logit i funkcja odwrotna do logit)
+
+1. logit: $logit(p) = ln(\frac{p}{1-p}) = ln(odds)$
+2. funkcja odwrotna $p = \frac{1}{1 + \exp(-odds)}$
 
 
+## Dlaczogo funkcja logit? VI
+```{r logit, echo=FALSE}
+s <- seq(0, 1, by = 0.001)
+logit <- data.frame(x = s, y = log(s / (1 - s)))
+ggplot(data = logit, aes(x = x, y = y)) + geom_point(colour = "#56B4E9")
+```
 
+
+## Dlaczogo funkcja logit? VII
+```{r r_logit, echo=FALSE}
+s_x <- seq(-10, 10, by = 0.1)
+s_y <- 1 / (1 + exp(-s_x))
+logit <- data.frame(x = s_x, y = s_y)
+ggplot(data = logit, aes(x = x, y = y)) + geom_point(colour = "#56B4E9")
+```
