@@ -61,19 +61,22 @@ Nic straconego!!! W liceum poznaliśmy funkcje monotoniczne, użyjmy ich!
 $$
 f(x) = \{
  \begin{array}{cc}
-1 & jeżeli \ x > 0.5  \\
-0 & jeżeli \ x < 0.5
+1 & jeżeli \ x > 0  \\
+0 & jeżeli \ x < 0
 \end{array}
 $$
 ```{r required_packages, include=FALSE, eval=TRUE}
 require('ggplot2')
+require("GGally")
+require("dplyr")
+setwd("D:/GIT/sg-lectures")
 ```
 
 ```{r ex_function, echo=FALSE, fig.height=3.5}
 x <- seq(-10, 10, by = 0.1)
 f_x <- ifelse(x > 0, 1, 0)
 dt1 <- data.frame(x_val = x, y_val = f_x)
-ggplot(data = dt1, aes(x_val, y_val)) + geom_point(colour = "#56B4E9")
+ggplot(data = dt1, aes(x_val, y_val)) + geom_point(colour = rgb(1,  0.463, 0.165))
 ```
 
 ## Dlaczogo funkcja logit? III
@@ -85,26 +88,27 @@ i otrzymujemy
 
 $$ Y_i = f(\beta X_i) = \{
  \begin{array}{cc}
-1 & jeżeli \ \beta X_i > 0.5  \\
-0 & jeżeli \ \beta X_i < 0.5
+1 & jeżeli \ \beta X_i > 0  \\
+0 & jeżeli \ \beta X_i < 0
 \end{array} $$
 
 ## Dlaczogo funkcja logit? IV
 
 #### Problemy 
 
-- co gdy $\beta X_i = 0.5$ (z tym łątwo sobie poradzić zmieniając jedną z nierówności na słabom)
-- funkcja jest nieciągła i nieróżniczkowalna co sprawia wiele problemów formalnych 
-- funkcja jest idelana do problemów liniowo separowalnych to co tak napradę zrobiliśmy to poprowadziliśmy ortogonalną hiperpłaszczyznę do hiperpłaszczyzny regresyjnej i powiedzieliśmy wszystko z jednej strony jest sukcesem a z drugiej poraszką, jednak w żeczywistości mało który problem jest liniowo separowalny.  
+1. co gdy $\beta X_i = 0$ (z tym łątwo sobie poradzić zmieniając jedną z nierówności na słabom)
+2. funkcja jest nieciągła i nieróżniczkowalna co sprawia wiele problemów formalnych. Przykłądowo gdy chemy wyznaczyć wspułćzynniki $\beta$ to co robimy to maksymalizujemy funkcję wiraygodności 
+  $$
+  L(\beta) = \prod_{i: \ y_i = 1}p(x_i)\prod_{i: \ y_i = 0}(1 - p(x_i))
+  $$
+ale jest ona nierużniczkowalna, więc nie możemy znaleźć analitycznie maksimum!
 
-## Dlaczogo funkcja logit? V
-```{r ex_function2, echo=FALSE}
-dt2 <- data.frame(x = seq(-10, 10, by = 0.1), y = seq(-10, 10, by = 0.1) * 0.2)
-ggplot(data = dt2, aes(x = x, y = y)) + geom_point(colour = "#56B4E9") +
-  geom_abline(slope = -0.2, colour = '#906060')
-
-```
-
+## Dlaczogo funkcja logit? IV cd
+<ol start = 3>
+<li>
+funkcja jest idelana do problemów liniowo separowalnych to co tak napradę zrobiliśmy to poprowadziliśmy hiperpłaszczyznę i powiedzieliśmy wszystko z jednej strony jest sukcesem a z drugiej poraszką. Jednak w żeczywistości mało który problem jest liniowo separowalny (pomysł nie jest zupełnie chybiony [perceptron](https://en.wikipedia.org/wiki/Perceptron).
+</li>
+</ol>
 ## Dlaczogo funkcja logit? V
 
 #### Definicja (Logit i funkcja odwrotna do logit)
@@ -117,7 +121,7 @@ ggplot(data = dt2, aes(x = x, y = y)) + geom_point(colour = "#56B4E9") +
 ```{r logit, echo=FALSE}
 s <- seq(0, 1, by = 0.001)
 logit <- data.frame(x = s, y = log(s / (1 - s)))
-ggplot(data = logit, aes(x = x, y = y)) + geom_point(colour = "#56B4E9")
+ggplot(data = logit, aes(x = x, y = y)) + geom_point(colour = rgb(1,  0.463, 0.165))
 ```
 
 
@@ -126,5 +130,61 @@ ggplot(data = logit, aes(x = x, y = y)) + geom_point(colour = "#56B4E9")
 s_x <- seq(-10, 10, by = 0.1)
 s_y <- 1 / (1 + exp(-s_x))
 logit <- data.frame(x = s_x, y = s_y)
-ggplot(data = logit, aes(x = x, y = y)) + geom_point(colour = "#56B4E9")
+ggplot(data = logit, aes(x = x, y = y)) + geom_point(colour = rgb(1,  0.463, 0.165))
+```
+
+## Dlaczogo funkcja logit? VIII
+
+Użyjmy funkcj logit do naszego problemu 
+
+$$
+ logit(Y) = \beta X
+$$
+zatem 
+$$
+ Y = \frac{e^{\beta X}}{1 + e^{\beta X}}
+$$
+
+## Dlaczogo funkcja logit? IX
+
+#### Brak problemów 
+1. $\beta X_i = 0$ wóWczas $\frac{e^{0.5}}{1 + e^{0.5}} = 0.5$
+2. funkcja jest ciągła monotoniczna i jest klasy $C^\infty$
+3. Poprowadziliśmy idealnie taką samą hiperpłąszczyznę co wczejśniej, ale teraz, w zależności od tego po której stronie hiperpłaszczyzny znajdzie się obserwacja i w jakiej odległości przypisujemy jej wartość od 0 do 1 co naturalnie można utożsamiać z prawdopodobieństwem sukcesu (bo $E(Y| X = x) =p$).
+
+## alternatywy do funkcji logit
+```{r r_alt, echo=FALSE}
+x <- seq(-10, 10, by = 0.1)
+probit <- pnorm(x)
+logit <- 1 / (1 + exp(-x))
+th <- tanh(x) / 2 + 0.5
+dt <- data.frame(x_val = rep(x, 3), y_val = c(probit, logit, th), label = c(rep("probit", 201), rep("logit", 201), rep("tanh(x) / 2 + 0.5", 201)))
+
+ggplot(dt, aes(x_val, y_val, colour = label)) + geom_line()
+
+```
+
+## Regresja w R
+
+```{r log_reg}
+# GGally
+
+cr <- mtcars
+cr$am <- as.factor(cr$am)
+ggpairs(cr, columns = c("mpg", "cyl", "disp", "hp"), 
+        mapping = ggplot2::aes(colour = am)
+        )
+
+```
+
+# przygotowanie próby
+```{r train_test}
+train <- sample_frac(cr, 0.6)
+test <- anti_join(cr, train)
+
+table(train$am) / nrow(train)
+
+table(test$am) / nrow(test)
+
+
 ```
