@@ -12,18 +12,28 @@ logo: dependencies/grosz.png
 
 ## Plan wykładu
   
-- przypomnienie teorii
-- regresja logistyczna w R
+- Teoria
+    - oznaczenia
+    - przypomnienie
+    - dlaczego funkcja logit
+    - alternatywy do funkcji logit
+    - bonus
+- R
+    - Rzut oka na dane
+    - Przygotowanie danych
+## Teoria
   
 ## Oznaczenia
 
 W dalszej części wykłady będziemy przyjmować następujące oznaczenia:
 
-- $Y_i$ - zmienna objaśniana dla i-tej próby (przyjmuje tylko wartości 0 i 1)
+- $Y_i$ - zmienna objaśniana
 - $p_i$ - prawdopodobieństwo sukcesu dla i-tej próby (szukana wartość)
 - $X$ - wektor zmiennych objśniających
 - $E$ - wartość oczekiwana 
 - $Odds$ - Szansa $\frac{p}{1 - p}$
+- $X$, $Y$ itp. - zmienne losowe
+- $x_i$, $y_i$ - realizacje zmiennych losowych
 
 ## Przypomnienie 
 
@@ -31,19 +41,20 @@ W dalszej części wykłady będziemy przyjmować następujące oznaczenia:
 
 Regresja logistyczna zakłada, że $Y_i$ ma rozkład Beornuliego:
   $$
-  Y_i| X = x \sim B(p_i, 1)
+  Y| X = x_i \sim B(p_i, 1)
   $$
 
 #### Wniosek 
 
-1. $E(Y_i|X = x) = p_i$ (dzięki temu regresja logistyczna działa!)
-2. $P(Y_i = y | X =x) = p_i^y(1 - p_i)^{(1-y)}$
+1. $E(Y|X = x_i) = p_i$ (dzięki temu regresja logistyczna działa!)
+2. $P(Y = y | X =x_i) = p_i^y(1 - p_i)^{(1-y)}$
 
 #### Dowód 
 
-1. $E(Y_i|X = x) = P(Y_i = 1) * 1 + P(Y_i = 0) * 0 = P(Y_i = 1) = p_i$
-2. $P(Y_i = 1 | X =x) = p_i^1 (1 - p_i)^{(1 - 1)} = p_i$
-   $P(Y_i = 0 | X =x) = p_i^0 (1 - p_i)^{(1 - 0)} = 1 - p_i$
+1. $E(Y|X = x_i) = P(Y = 1 |X = x_i) * 1 + P(Y = 0|X = x_i) * 0 =$
+   $= P(Y = 1|X = x_i) = p_i$
+2. $P(Y = 1 | X = x_i) = p_i^1 (1 - p_i)^{(1 - 1)} = p_i$
+   $P(Y = 0 | X = x_i) = p_i^0 (1 - p_i)^{(1 - 0)} = 1 - p_i$
 
 ## Dlaczogo funkcja logit?
 
@@ -51,7 +62,7 @@ Chcemy stworzyć model który powie nam czy pod warunkiem $X = x_i$ realizacja z
 
 Tworzymy zatem model liniowy 
 
-$$ Y_i = \beta X_i $$
+$$ E(Y) = \beta X $$
 Jest prawie dobrze ale $Y_i$ jako kombinacja liniowa zmiennych, które przeważnie nie są ograniczone, może przyjąć dowolnie duże (małe) wartości, w szczegulności różne od $\{0, 1\}$ .  
 
 ## Dlaczogo funkcja logit? II
@@ -66,6 +77,7 @@ f(x) = \{
 \end{array}
 $$
 ```{r required_packages, include=FALSE, eval=TRUE}
+#install.packages("GGally")
 require('ggplot2')
 require("GGally")
 require("dplyr")
@@ -81,15 +93,15 @@ ggplot(data = dt1, aes(x_val, y_val)) + geom_point(colour = rgb(1,  0.463, 0.165
 
 ## Dlaczogo funkcja logit? III
 
-udało się! wystarczy przyłożyć funkcję $f$ do prawej strony róWnania 
-$$ Y_i = \beta X_i $$
+udało się! wystarczy przyłożyć funkcję $f$ do prawej strony równania 
+$$ E(Y) = \beta X $$
 
 i otrzymujemy 
 
-$$ Y_i = f(\beta X_i) = \{
+$$ E(Y) = f(\beta X) = \{
  \begin{array}{cc}
-1 & jeżeli \ \beta X_i > 0  \\
-0 & jeżeli \ \beta X_i < 0
+1 & jeżeli \ \beta X > 0  \\
+0 & jeżeli \ \beta X < 0
 \end{array} $$
 
 ## Dlaczogo funkcja logit? IV
@@ -106,22 +118,23 @@ ale jest ona nierużniczkowalna, więc nie możemy znaleźć analitycznie maksim
 ## Dlaczogo funkcja logit? IV cd
 <ol start = 3>
 <li>
-funkcja jest idelana do problemów liniowo separowalnych to co tak napradę zrobiliśmy to poprowadziliśmy hiperpłaszczyznę i powiedzieliśmy wszystko z jednej strony jest sukcesem a z drugiej poraszką. Jednak w żeczywistości mało który problem jest liniowo separowalny (pomysł nie jest zupełnie chybiony [perceptron](https://en.wikipedia.org/wiki/Perceptron).
+funkcja jest idelana do problemów liniowo separowalnych to co tak napradę zrobiliśmy to poprowadziliśmy hiperpłaszczyznę i powiedzieliśmy wszystko z jednej strony jest sukcesem a z drugiej poraszką. Jednak w żeczywistości mało który problem jest liniowo separowalny (pomysł nie jest zupełnie chybiony [perceptron](https://en.wikipedia.org/wiki/Perceptron)).
 </li>
 </ol>
 ## Dlaczogo funkcja logit? V
 
 #### Definicja (Logit i funkcja odwrotna do logit)
 
-1. logit: $logit(p) = ln(\frac{p}{1-p}) = ln(odds)$
-2. funkcja odwrotna $p = \frac{1}{1 + \exp(-odds)}$
+1. logit - $logit(p) = ln(\frac{p}{1-p}) = ln(odds)$
+2. funkcja odwrotna - $p = \frac{1}{1 + \exp(-odds)}$
 
 
 ## Dlaczogo funkcja logit? VI
 ```{r logit, echo=FALSE}
 s <- seq(0, 1, by = 0.001)
 logit <- data.frame(x = s, y = log(s / (1 - s)))
-ggplot(data = logit, aes(x = x, y = y)) + geom_point(colour = rgb(1,  0.463, 0.165))
+ggplot(data = logit, aes(x = x, y = y)) + geom_point(colour = rgb(1,  0.463, 0.165)) +
+  ggtitle("logit")
 ```
 
 
@@ -130,7 +143,8 @@ ggplot(data = logit, aes(x = x, y = y)) + geom_point(colour = rgb(1,  0.463, 0.1
 s_x <- seq(-10, 10, by = 0.1)
 s_y <- 1 / (1 + exp(-s_x))
 logit <- data.frame(x = s_x, y = s_y)
-ggplot(data = logit, aes(x = x, y = y)) + geom_point(colour = rgb(1,  0.463, 0.165))
+ggplot(data = logit, aes(x = x, y = y)) + geom_point(colour = rgb(1,  0.463, 0.165)) +
+  ggtitle("funkcja odwrotna do logit")
 ```
 
 ## Dlaczogo funkcja logit? VIII
@@ -138,11 +152,11 @@ ggplot(data = logit, aes(x = x, y = y)) + geom_point(colour = rgb(1,  0.463, 0.1
 Użyjmy funkcj logit do naszego problemu 
 
 $$
- logit(Y) = \beta X
+ logit(E(Y|X)) = \beta X
 $$
 zatem 
 $$
- Y = \frac{e^{\beta X}}{1 + e^{\beta X}}
+ E(Y|X) = \frac{e^{\beta X}}{1 + e^{\beta X}}
 $$
 
 ## Dlaczogo funkcja logit? IX
@@ -153,31 +167,106 @@ $$
 3. Poprowadziliśmy idealnie taką samą hiperpłąszczyznę co wczejśniej, ale teraz, w zależności od tego po której stronie hiperpłaszczyzny znajdzie się obserwacja i w jakiej odległości przypisujemy jej wartość od 0 do 1 co naturalnie można utożsamiać z prawdopodobieństwem sukcesu (bo $E(Y| X = x) =p$).
 
 ## alternatywy do funkcji logit
-```{r r_alt, echo=FALSE}
+```{r r_alt, echo=FALSE, fig.height=3}
 x <- seq(-10, 10, by = 0.1)
 probit <- pnorm(x)
 logit <- 1 / (1 + exp(-x))
 th <- tanh(x) / 2 + 0.5
-dt <- data.frame(x_val = rep(x, 3), y_val = c(probit, logit, th), label = c(rep("probit", 201), rep("logit", 201), rep("tanh(x) / 2 + 0.5", 201)))
+t_student <- pt(x, df = 1)
+
+dt <- data.frame(x_val = rep(x, 4), y_val = c(probit, logit, th, t_student), label = c(rep("probit", 201), rep("logit", 201), rep("tanh / 2 + 0.5", 201), rep("t-studenta", 201)))
 
 ggplot(dt, aes(x_val, y_val, colour = label)) + geom_line()
 
 ```
 
-## Regresja w R
+#### Uwaga
+Tak naprawdę mogę wziąć dowolną dystrybuantę rozkładu ciągłego orkeślonego na całej osi $\mathbb{R}$ (Nietkóre to zły pomysł np. dystrybuanta rozkładu wykładniczego jest nieróżniczkowalna w 0).
 
-```{r log_reg}
-# GGally
+## Bonus I 
+Dlaczego nie należy rozważać wszystkich możliwych modeli?
 
-cr <- mtcars
-cr$am <- as.factor(cr$am)
-ggpairs(cr, columns = c("mpg", "cyl", "disp", "hp"), 
-        mapping = ggplot2::aes(colour = am)
-        )
+#### Scenariusz 
+Załóżmy, że mamy 100 zmiennych i chemy by do modelu weszlo 5 z nich, by wybrać najlepsze tworzymy wszystkie możliwe modele i wybieramy najlepszy z modeli za pomocą jakiegoś kryterium informacyjnego  
+np [BIC](https://en.wikipedia.org/wiki/Bayesian_information_criterion).
+
+## Bonus II
+
+#### Problemy 
+1. Może być to uciążliwe obliczeniowo w powyższym scenariuszu musimy stowrzyć
+
+$${100 \choose 5} = \frac{100!}{95!*5!} = 75 \ 287 \ 520$$
+2. Tworząc bardzo dużą liczbę modeli jesteśmy narażeni na 'overfitting'. 
+
+## Bonus III
+Jaka jest interpretacja zmianny wartości jednej zmiennej objaśniającej?
+
+W modelu linowym jest prosto np. mamy model
+  $$ y = -7 + 5x_1 + 3x_2 - 0.5x_3$$
+zmiana $x_2$ o jeden zmienia $y$ o 3. W regresji logistycznej jest to trochę ciężej interpretowalne. Przypomnijmy, że z wcześniejszych rozważań dostaliśmy 
+$$
+ p = E(Y|X) = \frac{e^{\beta X}}{1 + e^{\beta X}} = \frac{1}{1 + e^{-\beta X}}
+$$
+zatem dla ralizacji zmiennej losowej $X = (1, 3, 10)$ i powyższego modelu mamy
+
+## Bonus IV
+
+$$p_i = \frac{1}{1 + e^{-(-7 + 5x_1 + 3x_2 - 0.5x_3)}}$$
+$$p_i = \frac{1}{1 + e^{-(-7 + 5*1 + 3*2 - 0.5*10)}} = 0.269$$
+załóżmy, że chcemy zobaczyć co powoduje zmiana zmienej $X_3$ o jeden:
+$$p_i = \frac{1}{1 + e^{-(-7 + 5*1 + 3*2 - 0.5*9)}} = 0.378$$
+$$p_i = \frac{1}{1 + e^{-(-7 + 5*1 + 3*2 - 0.5*11)}} = 0.182$$
+
+## Bonus V
+
+Nie jest to zmiana liniowa $|0.269 - 0.182| = 0.087$ oraz $|0.269 - 0.378| = 0.109$ bo funkcja $\frac{1}{1 + e^{-\beta X}}$ nie jest liniowa, zatem zmiana zależy od wartości pozostałych zmiennych (dlatego ustaliliśmy wartości pozostałych zmiennych poza $X_3$) i od kierunku w którym się poruszamy. 
+
+## Bonus VI
+
+```{r bonus, echo=FALSE}
+x <- seq(-15, 15, by = 0.1)
+logit <- 1 / (1 + exp(4-x))
+extra_points <- data.frame(x_val = c(9, 10, 11), y_val = c(0.378, 0.269, 0.182), label = c("new", "old", "new"))
+
+dt <- data.frame(x_val = x, y_val = logit)
+
+ggplot(dt, aes(x_val, y_val)) + geom_line() +
+  geom_point(data = extra_points, aes(x_val, y_val, colour = label))
 
 ```
 
-# przygotowanie próby
+## Bonus VII
+
+Co zrobić w próbie mamy 30% sukcesów a w populacji 10% ? 
+
+Możemy wykożystać parametr $\beta$
+
+## R
+
+## Rzut oka na dane
+
+```{r log_reg, results="hide"}
+my_dens <- function(data, mapping, ...) {
+  ggplot(data = data, mapping=mapping) +
+    geom_density(..., alpha = 0.7, color = NA) 
+}
+
+cr <- mtcars
+cr$am <- as.factor(cr$am)
+pairs_plot <-GGally::ggpairs(cr, columns = c("mpg", "cyl", "disp"), 
+                mapping = aes(color  = am, fill  = am),
+                diag = list(continuous = my_dens)
+                )
+```
+
+## Rzut oka na dane II
+
+```{r log_reg2, echo=FALSE}
+pairs_plot
+```
+
+## przygotowanie danych
+
 ```{r train_test}
 train <- sample_frac(cr, 0.6)
 test <- anti_join(cr, train)
@@ -185,6 +274,4 @@ test <- anti_join(cr, train)
 table(train$am) / nrow(train)
 
 table(test$am) / nrow(test)
-
-
 ```
