@@ -1,46 +1,58 @@
 ---
 title: "Wykład II - Regresja logistyczna w R"
 author: "Mateusz Sobieraj"
-date: "13 marca 2017"
+date: "21 marca 2017"
 encoding: "UTF-8"
 output: 
   ioslides_presentation:
-  css: dependencies/styles.css
-  widescreen: true
-  logo: dependencies/grosz.png
+    css: dependencies/styles.css
+    widescreen: false
+    transition : "slower"
+    smaller: true
+    logo: dependencies/grosz.png
 
 ---
 
-## Plan wykładu
+<!-- 'f' enable fullscreen mode -->
+<!-- 'w' toggle widescreen mode -->
+<!-- 'o' enable overview mode -->
+<!-- 'h' enable code highlight mode -->
+<!-- 'p' show presenter notes -->
+
+## Plan wykładu {.build}
   
 - Teoria
-    - oznaczenia
-    - przypomnienie
-    - dlaczego funkcja logit
-    - alternatywy do funkcji logit
-    - bonus
+    - Oznaczenia
+    - Przypomnienie
+    - Dlaczego funkcja logit?
+    - Alternatywy do funkcji logit
+    - Bonus
 - R
     - Rzut oka na dane
     - Przygotowanie danych
-## Teoria
+    - Regresja logistyczna
+    - Tabela kontyngencji
+    - Optymalizacja punktu odcięcia
+    
+## Teoria {.build}
   
-## Oznaczenia
+## Oznaczenia {.build}
 
 W dalszej części wykłady będziemy przyjmować następujące oznaczenia:
 
-- $Y_i$ - zmienna objaśniana
+- $Y$ - zmienna objaśniana
 - $p_i$ - prawdopodobieństwo sukcesu dla i-tej próby (szukana wartość)
-- $X$ - wektor zmiennych objśniających
+- $X$ - wektor zmiennych objaśniających
 - $E$ - wartość oczekiwana 
 - $Odds$ - Szansa $\frac{p}{1 - p}$
 - $X$, $Y$ itp. - zmienne losowe
 - $x_i$, $y_i$ - realizacje zmiennych losowych
 
-## Przypomnienie 
+## Przypomnienie {.build}
 
 ##### Założenie
 
-Regresja logistyczna zakłada, że $Y_i$ ma rozkład Beornuliego:
+Regresja logistyczna zakłada, że $Y$ ma warunkowy rozkład Beornuliego:
   $$
   Y| X = x_i \sim B(p_i, 1)
   $$
@@ -57,16 +69,16 @@ Regresja logistyczna zakłada, że $Y_i$ ma rozkład Beornuliego:
 2. $P(Y = 1 | X = x_i) = p_i^1 (1 - p_i)^{(1 - 1)} = p_i$
    $P(Y = 0 | X = x_i) = p_i^0 (1 - p_i)^{(1 - 0)} = 1 - p_i$
 
-## Dlaczogo funkcja logit?
+## Dlaczego funkcja logit? {.build}
 
-Chcemy stworzyć model który powie nam czy pod warunkiem $X = x_i$ realizacja zmiennej $Y$ zakończy się sukcesem (1) czy porażkom (0). Nie wiemy jak to zrobić ale jesteśmy całkiem nieźli w modelach liniowych ;) .
+Chcemy stworzyć model, który powie nam czy pod warunkiem $X = x_i$ realizacja zmiennej $Y$ zakończy się sukcesem (1) czy porażką (0). Nie wiemy jak to zrobić, ale jesteśmy całkiem nieźli w modelach liniowych ;) .
 
 Tworzymy zatem model liniowy 
 
 $$ E(Y|X) = \beta X $$
-Jest prawie dobrze ale $Y_i$ jako kombinacja liniowa zmiennych, które przeważnie nie są ograniczone, może przyjąć dowolnie duże (małe) wartości, w szczegulności różne od $\{0, 1\}$ .  
+Jest prawie dobrze, ale $Y$ jako kombinacja liniowa zmiennych, które przeważnie nie są ograniczone, może przyjąć dowolnie duże (małe) wartości, w szczególności różne od $\{0, 1\}$ .  
 
-## Dlaczogo funkcja logit? II
+## Dlaczego funkcja logit? II {.build}
 
 Nic straconego!!! W liceum poznaliśmy funkcje monotoniczne, użyjmy ich! 
 
@@ -79,10 +91,12 @@ f(x) = \{
 $$
 ```{r required_packages, include=FALSE, eval=TRUE}
 #install.packages("GGally")
+# install.packages("SDMTools")
 require('ggplot2')
 require("GGally")
 require("dplyr")
 require("caret")
+require("SDMTools")
 setwd("D:/GIT/sg-lectures")
 fly<-read.csv("dependencies/FlightDelays.csv")
 fly <- fly %>% select(- flightnumber, -tailnu, -date)
@@ -95,45 +109,38 @@ dt1 <- data.frame(x_val = x, y_val = f_x)
 ggplot(data = dt1, aes(x_val, y_val)) + geom_point(colour = rgb(1,  0.463, 0.165))
 ```
 
-## Dlaczogo funkcja logit? III
+## Dlaczego funkcja logit? III {.build}
 
-udało się! wystarczy przyłożyć funkcję $f$ do prawej strony równania 
-$$ E(Y) = \beta X $$
+Udało się! Wystarczy przyłożyć funkcję $f$ do prawej strony równania 
+$$ E(Y|X) = \beta X $$
 
 i otrzymujemy 
 
-$$ E(Y) = f(\beta X) = \{
+$$ E(Y|X) = f(\beta X) = \{
  \begin{array}{cc}
 1 & jeżeli \ \beta X > 0  \\
 0 & jeżeli \ \beta X < 0
 \end{array} $$
 
-## Dlaczogo funkcja logit? IV
+## Dlaczego funkcja logit? IV {.build}
 
 #### Problemy 
 
-1. co gdy $\beta X_i = 0$ (z tym łątwo sobie poradzić zmieniając jedną z nierówności na słabom)
-2. funkcja jest nieciągła i nieróżniczkowalna co sprawia wiele problemów formalnych. Przykłądowo gdy chemy wyznaczyć wspułćzynniki $\beta$ to co robimy to maksymalizujemy funkcję wiraygodności 
+1. Co zrobić gdy $\beta X_i = 0$? (z tym łatwo sobie poradzić zmieniając jedną z nierówności na słabą)
+2. Funkcja jest nieciągła i nieróżniczkowalna co sprawia wiele problemów formalnych. Przykłądowo, gdy chemy wyznaczyć wspułćzynniki $\beta$ to co zwykle robimy to maksymalizujemy funkcję wiarygodności 
   $$
   L(\beta) = \prod_{i: \ y_i = 1}p(x_i)\prod_{i: \ y_i = 0}(1 - p(x_i))
   $$
-ale jest ona nierużniczkowalna, więc nie możemy znaleźć analitycznie maksimum!
+  3. Funkcja jest idealna do problemów liniowo separowanych to co tak naprawdę zrobiliśmy to poprowadziliśmy hiperpłaszczyznę i powiedzieliśmy wszystko z jednej strony jest sukcesem a z drugiej porażką. Jednak w rzeczywistości mało który problem jest liniowo separowany (pomysł nie jest zupełnie chybiony [perceptron](https://en.wikipedia.org/wiki/Perceptron)).
+ale jest ona nieróżniczkowalna, więc nie możemy znaleźć analitycznie maksimum!
 
-## Dlaczogo funkcja logit? IV cd
-<ol start = 3>
-<li>
-funkcja jest idelana do problemów liniowo separowalnych to co tak napradę zrobiliśmy to poprowadziliśmy hiperpłaszczyznę i powiedzieliśmy wszystko z jednej strony jest sukcesem a z drugiej poraszką. Jednak w żeczywistości mało który problem jest liniowo separowalny (pomysł nie jest zupełnie chybiony [perceptron](https://en.wikipedia.org/wiki/Perceptron)).
-</li>
-</ol>
-## Dlaczogo funkcja logit? V
+## Dlaczego funkcja logit? V {.build}
 
 #### Definicja (Logit i funkcja odwrotna do logit)
 
 1. logit - $logit(p) = ln(\frac{p}{1-p}) = ln(odds)$
 2. funkcja odwrotna - $p = \frac{1}{1 + \exp(-odds)}$
 
-
-## Dlaczogo funkcja logit? VI
 ```{r logit, echo=FALSE}
 s <- seq(0, 1, by = 0.001)
 logit <- data.frame(x = s, y = log(s / (1 - s)))
@@ -141,8 +148,7 @@ ggplot(data = logit, aes(x = x, y = y)) + geom_point(colour = rgb(1,  0.463, 0.1
   ggtitle("logit")
 ```
 
-
-## Dlaczogo funkcja logit? VII
+## Dlaczego funkcja logit? VI {.build}
 ```{r r_logit, echo=FALSE}
 s_x <- seq(-10, 10, by = 0.1)
 s_y <- 1 / (1 + exp(-s_x))
@@ -151,9 +157,9 @@ ggplot(data = logit, aes(x = x, y = y)) + geom_point(colour = rgb(1,  0.463, 0.1
   ggtitle("funkcja odwrotna do logit")
 ```
 
-## Dlaczogo funkcja logit? VIII
+## Dlaczego funkcja logit? VII {.build}
 
-Użyjmy funkcj logit do naszego problemu 
+Użyjmy funkcji logit do naszego problemu.
 
 $$
  logit(E(Y|X)) = \beta X
@@ -163,14 +169,20 @@ $$
  E(Y|X) = \frac{e^{\beta X}}{1 + e^{\beta X}}
 $$
 
-## Dlaczogo funkcja logit? IX
+## Dlaczego funkcja logit? VIII {.build}
 
 #### Brak problemów 
-1. $\beta X_i = 0$ wóWczas $\frac{e^{0.5}}{1 + e^{0.5}} = 0.5$
+1. $\beta X_i = 0$ wówczas $\frac{e^{0.5}}{1 + e^{0.5}} = 0.5$
 2. funkcja jest ciągła monotoniczna i jest klasy $C^\infty$
-3. Poprowadziliśmy idealnie taką samą hiperpłąszczyznę co wczejśniej, ale teraz, w zależności od tego po której stronie hiperpłaszczyzny znajdzie się obserwacja i w jakiej odległości przypisujemy jej wartość od 0 do 1 co naturalnie można utożsamiać z prawdopodobieństwem sukcesu (bo $E(Y| X = x) =p$).
+3. Poprowadziliśmy idealnie taką samą hiperpłaszczyznę co wcześniej, ale teraz, w zależności od tego po której stronie hiperpłaszczyzny znajdzie się obserwacja i w jakiej odległości przypisujemy jej wartość od 0 do 1 co naturalnie można utożsamiać z prawdopodobieństwem sukcesu (bo $E(Y| X = x) =p$).
 
-## alternatywy do funkcji logit
+<div class="notes">
+
+Jest to w 100% intujcyjne, naturalnym wydaje się, że im dalje obserwacja znajduje się od hiperpłaszczyzny tym mniejsze prawdopopdobieństwo pomyłki.
+
+</div>
+
+## Alternatywy do funkcji logit {.build}
 ```{r r_alt, echo=FALSE, fig.height=3}
 x <- seq(-10, 10, by = 0.1)
 probit <- pnorm(x)
@@ -185,47 +197,44 @@ ggplot(dt, aes(x_val, y_val, colour = label)) + geom_line()
 ```
 
 #### Uwaga
-Tak naprawdę mogę wziąć dowolną dystrybuantę rozkładu ciągłego orkeślonego na całej osi $\mathbb{R}$ (Nietkóre to zły pomysł np. dystrybuanta rozkładu wykładniczego jest nieróżniczkowalna w 0).
+Tak naprawdę mogę wziąć dowolną dystrybuantę rozkładu ciągłego określonego na całej osi $\mathbb{R}$ (Niektóre to zły pomysł np. dystrybuanta rozkładu wykładniczego jest nieróżniczkowalna w 0).
 
-## Bonus I 
+## Bonus I{.build}
 Dlaczego nie należy rozważać wszystkich możliwych modeli?
 
 #### Scenariusz 
-Załóżmy, że mamy 100 zmiennych i chemy by do modelu weszlo 5 z nich, by wybrać najlepsze tworzymy wszystkie możliwe modele i wybieramy najlepszy z modeli za pomocą jakiegoś kryterium informacyjnego  
-np [BIC](https://en.wikipedia.org/wiki/Bayesian_information_criterion).
-
-## Bonus II
+Załóżmy, że mamy 100 zmiennych i chcemy by do modelu weszło 5 z nich. By wybrać najlepsze tworzymy wszystkie możliwe modele i wybieramy najlepszy z modeli za pomocą jakiegoś kryterium informacyjnego np [BIC](https://en.wikipedia.org/wiki/Bayesian_information_criterion).
 
 #### Problemy 
-1. Może być to uciążliwe obliczeniowo w powyższym scenariuszu musimy stowrzyć
+1. Może być to uciążliwe obliczeniowo w powyższym scenariuszu musimy stowrzyć.
 
 $${100 \choose 5} = \frac{100!}{95!*5!} = 75 \ 287 \ 520$$
 2. Tworząc bardzo dużą liczbę modeli jesteśmy narażeni na 'overfitting'. 
 
-## Bonus III
-Jaka jest interpretacja zmianny wartości jednej zmiennej objaśniającej?
+## Bonus II {.build}
+
+Jaka jest interpretacja zmiany wartości jednej zmiennej objaśniającej?
 
 W modelu linowym jest prosto np. mamy model
   $$ y = -7 + 5x_1 + 3x_2 - 0.5x_3$$
-zmiana $x_2$ o jeden zmienia $y$ o 3. W regresji logistycznej jest to trochę ciężej interpretowalne. Przypomnijmy, że z wcześniejszych rozważań dostaliśmy 
+
+zmiana $x_2$ o jeden zmienia $y$ o 3 (niezależnie od wartości pozostałych zmiennych). W regresji logistycznej jest to trochę ciężej interpretowalne. Przypomnijmy, że z wcześniejszych rozważań dostaliśmy 
 $$
  p = E(Y|X) = \frac{e^{\beta X}}{1 + e^{\beta X}} = \frac{1}{1 + e^{-\beta X}}
 $$
-zatem dla ralizacji zmiennej losowej $X = (1, 3, 10)$ i powyższego modelu mamy
+zatem dla realizacji zmiennej losowej $X = (1, 3, 10)$ i powyższego modelu mamy
 
-## Bonus IV
+## Bonus III {.build}
 
 $$p_i = \frac{1}{1 + e^{-(-7 + 5x_1 + 3x_2 - 0.5x_3)}}$$
 $$p_i = \frac{1}{1 + e^{-(-7 + 5*1 + 3*2 - 0.5*10)}} = 0.731$$
-załóżmy, że chcemy zobaczyć co powoduje zmiana zmienej $X_3$ o jeden:
+załóżmy, że chcemy zobaczyć co powoduje zmiana zmiennej $X_3$ o jeden:
 $$p_i = \frac{1}{1 + e^{-(-7 + 5*1 + 3*2 - 0.5*9)}} = 0.623$$
 $$p_i = \frac{1}{1 + e^{-(-7 + 5*1 + 3*2 - 0.5*11)}} = 0.818$$
 
-## Bonus V
+## Bonus IV {.build}
 
-Nie jest to zmiana liniowa $|0.731 - 0.623| = 0.108$ oraz $|0.731 - 0.818| = 0.109$ bo funkcja $\frac{1}{1 + e^{-\beta X}}$ nie jest liniowa, zatem zmiana zależy od wartości pozostałych zmiennych (dlatego ustaliliśmy wartości pozostałych zmiennych poza $X_3$) i od kierunku w którym się poruszamy. 
-
-## Bonus VI
+Nie jest to zmiana liniowa $|0.731 - 0.623| = 0.108$ oraz $|0.731 - 0.818| = 0.109$ bo funkcja $\frac{1}{1 + e^{-\beta X}}$ nie jest liniowa. Co więcej istnieje zależność od wartości pozostałych zmiennych (dlatego ustaliliśmy wartości pozostałych zmiennych poza $X_3$) i od kierunku w którym się poruszamy. 
 
 ```{r bonus, echo=FALSE}
 x <- seq(-5, 20, by = 0.1)
@@ -239,55 +248,59 @@ ggplot(dt, aes(x_val, y_val)) + geom_line() +
 
 ```
 
-## Bonus VII
+## Bonus V {.build}
 
-Co zrobić w próbie mamy $\hat{p} = 30\%$ sukcesów a w populacji $p = 10\%$ ? 
+Co zrobić, gdy w próbie mamy $\hat{p} = 30\%$ sukcesów a w populacji $p = 10\%$ ? 
 
 Wystarczy skorygować parametr $\hat{\beta_0}$ w stępujący sposób
 
 $$\beta = \hat{\beta_0} + \ln\frac{p}{1 - p} - \ln\frac{\hat{p}}{1 - \hat{p}}$$
+<!-- 
+#### Dowód  -->
 
-## R
+<!-- $$\frac{e^{\beta_0 + \beta_1 X_1 + \ldots +\beta_n X_n}}{1 + e^{\beta_0 + \beta_1 X_1 + \ldots +\beta_n X_n}}$$ 
+-->
 
-## Rzut oka na dane I
 
-We use data set on delayed airplanes. The data set consists of 2201
-airplane flights in January 2004 from the Washington DC area into the NYC area.
-The characteristic of interest (the response) is whether or not a flight has been
-delayed by more than 15 min (coded as 0 for no delay, and 1 for delay).
+## R {.build}
+
+## Rzut oka na dane I {.build}
+
+Użyjemy danych o opóźnieniach lotów. Zbiór danych zawiera 2201
+lotów, które się odbyły w styczniu 2004 z dystryktu Washington DC do dystryktu NYC.
+Flaga `delayed`  jest nadana, gdy opóźnienie wynosi więcej niż 15 minut (0 dla nie opóźnionych i 1 dla opóźnionych).
 
 nr col|col name|description
 ---|---|---
 [, 1]|schedtime|
 [, 2]|carrier|
 [, 3]|deptime|
-[, 4]|dest| departure airports (Reagan, Dulles, and Baltimore)
+[, 4]|dest|arrival airports (Kennedy, Newark, and LaGuardia)
 
-## Rzut oka na dane I cd
+## Rzut oka na dane I cd {.build}
 
 nr col|col name|description
 ---|---|---
 [, 5]|distance|
-[, 6]|origin|arrival airports (Kennedy, Newark, and LaGuardia)
+[, 6]|origin|departure airports (Reagan, Dulles, and Baltimore)
 [, 7]|weather|
-[, 8]|vs|
-[, 9]|dayweek|
-[,10]|daymonth|
-[,11]|delay|
+[, 8]|dayweek|
+[,9]|daymonth|
+[,10]|delay|
 
-## Rzut oka na dane II
+## Rzut oka na dane II {.build}
 
 ```{r fly_rev1}
 str(fly)
 ```
 
-## Rzut oka na dane III
+## Rzut oka na dane III {.build}
 
 ```{r fly_rev2}
 summary(fly)
 ```
 
-## Rzut oka na dane IV
+## Rzut oka na dane IV {.build}
 
 ```{r fly_rev3, results="hide"}
 my_dens <- function(data, mapping, ...) {
@@ -301,38 +314,52 @@ pairs_plot <-GGally::ggpairs(fly, columns = c("distance", "schedtime", "dest"),
                 )
 ```
 
-## Rzut oka na dane IV cd
+<div class="notes">
+
+schedtime x distance korelacja w całej populacji i podgrupach
+
+</div>
+
+## Rzut oka na dane IV cd {.build}
 
 ```{r fly_rev4, echo=FALSE}
 pairs_plot
 ```
 
-## przygotowanie danych
+## Przygotowanie danych {.build}
 ```{r train_test}
 train <- sample_frac(fly, 0.6) # dplyr
 test <- anti_join(fly, train) # dplyr
 ```
 
-## Regresja logistyczna 
+## Regresja logistyczna {.build}
 
-```{r reg_log1}
+```{r reg_log1, warning=FALSE}
 m1 <- glm(delay ~ ., data = train, family = binomial)
 summary(m1)
+```
 
+## Regresja logistyczna {.build} cd.
+
+```{r reg_log1cd, warning=FALSE}
 m2 <- glm(delay ~ schedtime + carrier + deptime, data = train, family = binomial)
 summary(m2)
 ```
 
-## Test któy model jest lepszy 
+## Regresja logistyczna II {.build}
 
-Wykonamy [Likelihood-ratio test](https://en.wikipedia.org/wiki/Likelihood-ratio_test), czyli test któy sprawdza czy model bardziej złożony jest lepszy (Hipoteza $H_0$ model mniej złożony jest lepszy.)
+Test który model jest lepszy
+
+Wykonamy [Likelihood-ratio test](https://en.wikipedia.org/wiki/Likelihood-ratio_test), czyli test któy sprawdza czy model bardziej złożony jest lepszy (Hipoteza $H_0$ model mniej złożony jest lepszy).
 
 ```{r, lrt}
 anova(m1, m2, test = "Chisq")
 ```
 
 
-## Dokonywanie predykcj na zboirze testowym 
+## Regresja logistyczna III {.build}
+
+Dokonywanie predykcji na zbiorze testowym 
 
 ```{r predict_val}
 pred <- predict(m1, test, type = "response")
@@ -342,28 +369,26 @@ confusionMatrix(table(klasyfikacja, actuals))
 
 ```
 
-## Tabela kontyngencji
+## Tabela kontyngencji {.build}
 
 [Confusion matrix](https://en.wikipedia.org/wiki/Sensitivity_and_specificity)
 
 [Tabela kontyngencji](https://pl.wikipedia.org/wiki/Swoisto%C5%9B%C4%87_testu_diagnostycznego)
 
-## optymalizacja punktu odcięcia 
+## Optymalizacja punktu odcięcia {.build}
 
 ```{r}
-# install.packages("SDMTools")
-require("SDMTools")
-
+# SDMTools
 optimal <- optim.thresh(actuals, pred)
-
 optimal
 ```
 
-## Czy udało nam się poprawić wynik?
+## Optymalizacja punktu odcięcia II
+
+Czy udało nam się poprawić wynik? {.build}
 
 ```{r}
 klasyfikacja <- ifelse(pred > 0.87, 0, 1)
-
-confusionMatrix(table(klasyfikacja, actuals))
+confusionMatrix(table(klasyfikacja, actuals)) # caret
 
 ```
