@@ -92,6 +92,8 @@ $$
 ```{r required_packages, include=FALSE, eval=TRUE}
 #install.packages("GGally")
 # install.packages("SDMTools")
+#install.packages("leaps")
+require("leaps")
 require('ggplot2')
 require("GGally")
 require("dplyr")
@@ -127,7 +129,7 @@ $$ E(Y|X) = f(\beta X) = \{
 #### Problemy 
 
 1. Co zrobić gdy $\beta X_i = 0$? (z tym łatwo sobie poradzić zmieniając jedną z nierówności na słabą)
-2. Funkcja jest nieciągła i nieróżniczkowalna co sprawia wiele problemów formalnych. Przykłądowo, gdy chemy wyznaczyć wspułćzynniki $\beta$ to co zwykle robimy to maksymalizujemy funkcję wiarygodności 
+2. Funkcja jest nieciągła i nieróżniczkowalna co sprawia wiele problemów formalnych. Przykładowo, gdy chcemy wyznaczyć współczynniki $\beta$ to co zwykle robimy to maksymalizujemy funkcję wiarygodności 
   $$
   L(\beta) = \prod_{i: \ y_i = 1}p(x_i)\prod_{i: \ y_i = 0}(1 - p(x_i))
   $$
@@ -178,7 +180,7 @@ $$
 
 <div class="notes">
 
-Jest to w 100% intujcyjne, naturalnym wydaje się, że im dalje obserwacja znajduje się od hiperpłaszczyzny tym mniejsze prawdopopdobieństwo pomyłki.
+Jest to w 100% intuicyjne, naturalnym wydaje się, że im dalej obserwacja znajduje się od hiperpłaszczyzny tym mniejsze prawdopodobieństwo pomyłki.
 
 </div>
 
@@ -206,10 +208,26 @@ Dlaczego nie należy rozważać wszystkich możliwych modeli?
 Załóżmy, że mamy 100 zmiennych i chcemy by do modelu weszło 5 z nich. By wybrać najlepsze tworzymy wszystkie możliwe modele i wybieramy najlepszy z modeli za pomocą jakiegoś kryterium informacyjnego np [BIC](https://en.wikipedia.org/wiki/Bayesian_information_criterion).
 
 #### Problemy 
-1. Może być to uciążliwe obliczeniowo w powyższym scenariuszu musimy stowrzyć.
+1. Może być to uciążliwe obliczeniowo w powyższym scenariuszu musimy stworzyć.
 
 $${100 \choose 5} = \frac{100!}{95!*5!} = 75 \ 287 \ 520$$
 2. Tworząc bardzo dużą liczbę modeli jesteśmy narażeni na 'overfitting'. 
+
+## Bonus I cd{.build}
+
+Jeżeli bardzo chcemy, rozważyć wszystkie możliwe modele możemy użyć funkcji `regsubsets` z pakietu `leaps`
+
+- `nvmax` - maksymalna dozwolona liczba zmiennych
+- w wierszach mamy wielkość podzbioru (z ilu zmiennych się składa) (w naszym przypadku 1 - 5)
+- \* - oznacza czy zmienna znajduje się w tym podzbiorze 
+- podzbiory nie muszą być w sobie zawarte (znajduje on najlepsze podzbiory)
+
+## Bonus I cd{.build}
+
+```{r leaps}
+regfit_full <- regsubsets(Sepal.Length ~ ., data = iris, nvmax = 5)
+summary(regfit_full)
+```
 
 ## Bonus II {.build}
 
@@ -252,14 +270,18 @@ ggplot(dt, aes(x_val, y_val)) + geom_line() +
 
 Co zrobić, gdy w próbie mamy $\hat{p} = 30\%$ sukcesów a w populacji $p = 10\%$ ? 
 
-Wystarczy skorygować parametr $\hat{\beta_0}$ w stępujący sposób
+Wystarczy skorygować parametr $\hat{\beta_0}$ w następujący sposób
 
 $$\beta = \hat{\beta_0} + \ln\frac{p}{1 - p} - \ln\frac{\hat{p}}{1 - \hat{p}}$$
-<!-- 
-#### Dowód  -->
 
-<!-- $$\frac{e^{\beta_0 + \beta_1 X_1 + \ldots +\beta_n X_n}}{1 + e^{\beta_0 + \beta_1 X_1 + \ldots +\beta_n X_n}}$$ 
--->
+#### Dowód
+
+Weźmy otrzymany model 
+$$ \ln\frac{\hat{p}}{1- \hat{p}} = \hat{\beta_0} + \beta_1 X_1 + \ldots +\beta_n X_n$$ 
+i płóżmy $\beta = \hat{\beta_0} + \ln\frac{p}{1 - p} - \ln\frac{\hat{p}}{1 - \hat{p}}$ zamiast $\beta_0$. WóWczas
+$$ \ln\frac{\hat{p}}{1- \hat{p}} = \beta_0 - \ln\frac{p}{1 - p} + \ln\frac{\hat{p}}{1 - \hat{p}} + \beta_1 X_1 + \ldots +\beta_n X_n$$ 
+$$ \ln\frac{\hat{p}}{1- \hat{p}} + \ln\frac{p}{1 - p} - \ln\frac{\hat{p}}{1 - \hat{p}} = \beta_0 + \beta_1 X_1 + \ldots +\beta_n X_n$$
+$$ \ln\frac{p}{1 - p}= \beta_0 + \beta_1 X_1 + \ldots +\beta_n X_n$$
 
 
 ## R {.build}
@@ -268,7 +290,7 @@ $$\beta = \hat{\beta_0} + \ln\frac{p}{1 - p} - \ln\frac{\hat{p}}{1 - \hat{p}}$$
 
 Użyjemy danych o opóźnieniach lotów. Zbiór danych zawiera 2201
 lotów, które się odbyły w styczniu 2004 z dystryktu Washington DC do dystryktu NYC.
-Flaga `delayed`  jest nadana, gdy opóźnienie wynosi więcej niż 15 minut (0 dla nie opóźnionych i 1 dla opóźnionych).
+Flaga `delayed`  jest nadana, gdy opóźnienie wynosi więcej niż 15 minut (0 dla nieopóźnionych i 1 dla opóźnionych).
 
 nr col|col name|description
 ---|---|---
@@ -350,7 +372,7 @@ summary(m2)
 
 Test który model jest lepszy
 
-Wykonamy [Likelihood-ratio test](https://en.wikipedia.org/wiki/Likelihood-ratio_test), czyli test któy sprawdza czy model bardziej złożony jest lepszy (Hipoteza $H_0$ model mniej złożony jest lepszy).
+Wykonamy [Likelihood-ratio test](https://en.wikipedia.org/wiki/Likelihood-ratio_test), czyli test który sprawdza czy model bardziej złożony jest lepszy (Hipoteza $H_0$ model mniej złożony jest lepszy).
 
 ```{r, lrt}
 anova(m1, m2, test = "Chisq")
@@ -375,6 +397,14 @@ confusionMatrix(table(klasyfikacja, actuals))
 
 [Tabela kontyngencji](https://pl.wikipedia.org/wiki/Swoisto%C5%9B%C4%87_testu_diagnostycznego)
 
+statystyka |wzór|opis 
+---|---|---
+`Sensitivity`(`Czułość`)|$\frac{TP}{TP + FN}$|zdolność modelu do prawidłowej klasyfikacji zajścia zdarzenia (im wyższa czułość tym niższy błąd I rodzaju).
+`Specificity`(`Swoistość`)|$\frac{TN}{TN + FP}$|zdolność modelu do prawidłowej klasyfikacji nie zajścia zdarzenia(im wyższa swoistość tym niższy błąd II rodzaju).
+`Precision`(`Precyzja`)|$\frac{TP + TN}{TP + TN + FP + FN}$| mierzy obciążenie modelu ([bias](https://en.wikipedia.org/wiki/Bias%E2%80%93variance_tradeoff))
+`Accuracy`(`Dokładnść`)|$\frac{TP}{TP + FP}$| mierzy wariancje modelu ([variance](https://en.wikipedia.org/wiki/Bias%E2%80%93variance_tradeoff))
+`Misclassification rate`(`Błąd klasyfikacji`)|$\frac{FP + FN}{TP + Tn + FP + Fn}$| ogólny błąd predykcji
+
 ## Optymalizacja punktu odcięcia {.build}
 
 ```{r}
@@ -388,7 +418,7 @@ optimal
 Czy udało nam się poprawić wynik? {.build}
 
 ```{r}
-klasyfikacja <- ifelse(pred > 0.87, 0, 1)
+klasyfikacja <- ifelse(pred > 0.85, 0, 1)
 confusionMatrix(table(klasyfikacja, actuals)) # caret
-
+confusionMatrix
 ```
