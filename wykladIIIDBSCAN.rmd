@@ -1,0 +1,169 @@
+---
+title: "Wykład III - DBSCAN"
+author: "Mateusz Sobieraj"
+date: "3 kwiecien 2017"
+encoding: "UTF-8"
+output: 
+  ioslides_presentation:
+    css: dependencies/styles.css
+    widescreen: false
+    transition : "slower"
+    smaller: true
+    logo: dependencies/grosz.png
+---
+
+<!-- 'f' enable fullscreen mode -->
+<!-- 'w' toggle widescreen mode -->
+<!-- 'o' enable overview mode -->
+<!-- 'h' enable code highlight mode -->
+<!-- 'p' show presenter notes -->
+
+```{r required_datasets, include=FALSE, eval=TRUE}
+#install.packages('ggplot2', dependencies = T)
+#install.packages('assertthat', dependencies = T)
+library('ggplot2')
+
+
+# datasets preparing #
+
+# different sizes
+set.seed(0.5)
+ds <- data.frame(x = c(runif(1000), runif(200, 0.3, 0.7) + 0.75, runif(200, 0.3, 0.7) - 0.75)
+                 , y = c(runif(1000), runif(200, 0.3, 0.7), runif(200, 0.3, 0.7))
+                 , label =c(rep('first', 1000), rep('second', 200), rep('third', 200)))
+
+# different  densities
+set.seed(0.5)
+dd <- data.frame(x = c(runif(200), runif(200, 0.35, 0.65) + 1, runif(200, 0.35, 0.65) + 1)
+                 , y = c(runif(200), runif(200, 0.35, 0.65) + 0.25, runif(200, 0.35, 0.65) - 0.25)
+                 , label =c(rep('first', 200), rep('second', 200), rep('third', 200)))
+
+# on-convex shapes
+set.seed(0.5)
+phi1 <- seq(0, pi, by = 0.1)
+x1<- rep(cos(phi1), 50) + runif(50, 0, 0.3)
+y1<- rep(sin(phi1), 50) + runif(50, 0, 0.3)
+phi2 <- seq(pi, 2 * pi, by = 0.1)
+x2<- 1 + rep(cos(phi2), 50) + runif(50, 0, 0.3)
+y2<- 0.5 + rep(sin(phi2), 50) + runif(50, 0, 0.3)
+
+nc <- data.frame(x= c(x1, x2)
+                 , y = c(y1, y2)
+                 , label =c(rep('first', length(x1)), rep('second', length(x2)))
+                 )
+
+# kmeans clasification #
+
+ds_km <- kmeans(ds[, -3], 3)
+ds_km.labels <- as.factor(ds_km$cluster)
+
+dd_km <- kmeans(dd[, -3], 3)
+dd_km.labels <- as.factor(dd_km$cluster)
+
+nc_km <- kmeans(nc[, -3], 2)
+nc_km.labels <- as.factor(nc_km$cluster)
+
+
+# plots preparing #
+
+ds_original <- ggplot(data = ds, aes(x= x, y = y, colour = label)) + geom_point() + ggtitle("Pierwotne klastry")
+ds_kmeans <- ggplot(data = ds, aes(x= x, y = y, colour = ds_km.labels)) + geom_point() + ggtitle("Klasyfikacja K-means")
+
+dd_original <- ggplot(data = dd, aes(x= x, y = y, colour = label)) + geom_point() + ggtitle("Pierwotne klastry")
+dd_kmeans <- ggplot(data = dd, aes(x= x, y = y, colour = dd_km.labels)) + geom_point() + ggtitle("Klasyfikacja K-means")
+
+nc_original <- ggplot(data = nc, aes(x= x, y = y, colour = label)) + geom_point() + ggtitle("Pierwotne klastry")
+nc_kmeans <- ggplot(data = nc, aes(x= x, y = y, colour = nc_km.labels)) + geom_point() + ggtitle("Klasyfikacja K-means")
+
+```
+
+## Plan wykładu {.build}
+
+- Teoria
+
+- R
+
+
+## Dlaczego nie chcemy zawsze używać `K-means` {.build}
+
+Algorytm `K-means` jest prostym algorytmem, często dającym bardzo dobre rezultaty, jednak ma swoje ograniczenia. Najważniejsze znich to
+
+1. możemy go stosować tylko dla obiektów opisanych zmiennymi ciągłymi.
+2. musimy zgóry określić liczbe klastrów
+3. jest wrażliwy na szum i obserwacje odstające
+4. nie klasyfikuje dobrze klastórw o niewypukłych krztałtach
+5. nie klasyfikuje dobrze klastórw o różnych gęstościach
+
+## Różne gęstości {.build}
+```{r, echo=FALSE}
+dd_original
+```
+
+## Różne gęstości
+```{r, echo=FALSE}
+dd_kmeans
+```
+
+## Różne wielkości klastrów {.build}
+```{r, echo=FALSE}
+ds_original
+```
+
+## Różne wielkości klastrów
+```{r, echo=FALSE}
+ds_kmeans
+```
+
+## Klastty o niewypukłych krztałtach {.build}
+```{r, echo=FALSE}
+nc_original
+```
+
+## Klastty o niewypukłych krztałtach
+```{r, echo=FALSE}
+nc_kmeans
+```
+
+## Alternatywy do `K-means` {.build}
+
+Inne grupy algorytmów nauczania bez nadzoru:
+
+  - `Expectation–maximization algorithm (EM)`
+  - `Density-Based Clustering`
+    - **`Density-based spatial clustering of applications with noise (DBSCAN)`**
+    - `Ordering points to identify the clustering structure (OPTICS)`
+    - `Density Clustering (DENCLUE)`
+  - `Hierarchical Clustering`
+    - `Single link`
+    - `Complete link`
+    - `Average`
+    - `Centroid`
+  - inne wersje `K-means`
+    - `K-Medoids`
+    - `K-modes`
+
+
+## Algorytm `DBSCAN` {.build}
+
+Problemy `K-means`
+
+1. możemy go stosować tylko dla obiektów opisanych zmiennymi ciągłymi.
+2. musimy zgóry określić liczbe klastrów
+3. jest wrażliwy na szum i obserwacje odstające
+4. nie klasyfikuje dobrze klastórw o niewypukłych krztałtach
+5. nie klasyfikuje dobrze klastórw o różnych gęstościach
+
+## Algorytm `DBSCAN`
+
+Problemy z którymi poradzi sobie ``
+
+1. możemy go stosować tylko dla obiektów opisanych zmiennymi ciągłymi.
+2. `musimy zgóry określić liczbe klastrów`
+3. `jest wrażliwy na szum i obserwacje odstające`
+4. `nie klasyfikuje dobrze klastórw o niewypukłych krztałtach`
+5. nie klasyfikuje dobrze klastórw o różnych gęstościach
+
+## Algorytm `DBSCAN` 
+
+- W `Density-Based Clustering` staramy podzielić punkty na 'gęste' obszary oddzielone 'negęstymi' obszarami
+  - 
