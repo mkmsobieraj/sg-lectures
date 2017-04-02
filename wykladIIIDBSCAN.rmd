@@ -21,8 +21,13 @@ output:
 ```{r required_datasets, include=FALSE, eval=TRUE}
 #install.packages('ggplot2', dependencies = T)
 #install.packages('assertthat', dependencies = T)
+#install.packages('factoextra')
+#install.packages('fpc')
+#install.packages('dbscan')
+library('dbscan')
+library('fpc')
 library('ggplot2')
-
+library('factoextra')
 
 # datasets preparing #
 
@@ -32,7 +37,7 @@ ds <- data.frame(x = c(runif(1000), runif(200, 0.3, 0.7) + 0.75, runif(200, 0.3,
                  , y = c(runif(1000), runif(200, 0.3, 0.7), runif(200, 0.3, 0.7))
                  , label =c(rep('first', 1000), rep('second', 200), rep('third', 200)))
 
-# different  densities
+# different densities
 set.seed(0.5)
 dd <- data.frame(x = c(runif(200), runif(200, 0.35, 0.65) + 1, runif(200, 0.35, 0.65) + 1)
                  , y = c(runif(200), runif(200, 0.35, 0.65) + 0.25, runif(200, 0.35, 0.65) - 0.25)
@@ -52,6 +57,9 @@ nc <- data.frame(x= c(x1, x2)
                  , label =c(rep('first', length(x1)), rep('second', length(x2)))
                  )
 
+# weird shapes
+ws <- multishapes #factoextra
+ws$shape <-as.factor(ws$shape)
 # kmeans clasification #
 
 ds_km <- kmeans(ds[, -3], 3)
@@ -63,6 +71,8 @@ dd_km.labels <- as.factor(dd_km$cluster)
 nc_km <- kmeans(nc[, -3], 2)
 nc_km.labels <- as.factor(nc_km$cluster)
 
+ws_km <- kmeans(ws[, -3], 6)
+ws_km.labels <- as.factor(ws_km$cluster)
 
 # plots preparing #
 
@@ -75,14 +85,24 @@ dd_kmeans <- ggplot(data = dd, aes(x= x, y = y, colour = dd_km.labels)) + geom_p
 nc_original <- ggplot(data = nc, aes(x= x, y = y, colour = label)) + geom_point() + ggtitle("Pierwotne klastry")
 nc_kmeans <- ggplot(data = nc, aes(x= x, y = y, colour = nc_km.labels)) + geom_point() + ggtitle("Klasyfikacja K-means")
 
+
+ws_original <- ggplot(data = ws, aes(x= x, y = y, colour = shape)) + geom_point() + ggtitle("Pierwotne klastry")
+ws_kmeans <- ggplot(data = ws, aes(x= x, y = y, colour = ws_km.labels)) + geom_point() + ggtitle("Klasyfikacja K-means")
+
 ```
 
 ## Plan wykładu {.build}
 
 - Teoria
-
+  - Dlaczego nie chcemy zawsze używać K-means
+  - Alternatywy do K-means
+  - Algorytm DBSCAN Wstęp
+  - Algorytm DBSCAN Podstawowe Definicje
+  - Algorytm DBSCAN dobór optymalnych $\epislon$ i $mp$
+  - Algorytm DBSCAN problemy
 - R
 
+## Teoria
 
 ## Dlaczego nie chcemy zawsze używać `K-means` {.build}
 
@@ -128,22 +148,22 @@ nc_kmeans
 
 Inne grupy algorytmów nauczania bez nadzoru:
 
-  - `Expectation–maximization algorithm (EM)`
-  - `Density-Based Clustering`
-    - **`Density-based spatial clustering of applications with noise (DBSCAN)`**
-    - `Ordering points to identify the clustering structure (OPTICS)`
-    - `Density Clustering (DENCLUE)`
-  - `Hierarchical Clustering`
-    - `Single link`
-    - `Complete link`
-    - `Average`
-    - `Centroid`
-  - inne wersje `K-means`
-    - `K-Medoids`
-    - `K-modes`
+  - Expectation–maximization algorithm (EM)
+  - Density-Based Clustering
+    - `Density-based spatial clustering of applications with noise (DBSCAN)`
+    - Ordering points to identify the clustering structure (OPTICS)
+    - Density Clustering (DENCLUE)
+  - Hierarchical Clustering
+    - Single link
+    - Complete link
+    - Average
+    - Centroid
+  - inne wersje K-means
+    - K-Medoids
+    - K-modes
 
 
-## Algorytm `DBSCAN` {.build}
+## Algorytm `DBSCAN`  Wstęp {.build}
 
 Problemy `K-means`
 
@@ -153,9 +173,9 @@ Problemy `K-means`
 4. nie klasyfikuje dobrze klastórw o niewypukłych krztałtach
 5. nie klasyfikuje dobrze klastórw o różnych gęstościach
 
-## Algorytm `DBSCAN`
+## Algorytm `DBSCAN` Wstęp
 
-Problemy z którymi poradzi sobie ``
+Problemy z którymi poradzi sobie `DBSCAN`
 
 1. możemy go stosować tylko dla obiektów opisanych zmiennymi ciągłymi.
 2. `musimy zgóry określić liczbe klastrów`
@@ -163,7 +183,95 @@ Problemy z którymi poradzi sobie ``
 4. `nie klasyfikuje dobrze klastórw o niewypukłych krztałtach`
 5. nie klasyfikuje dobrze klastórw o różnych gęstościach
 
-## Algorytm `DBSCAN` 
+## Algorytm `DBSCAN`  Wstęp II {.build} 
 
-- W `Density-Based Clustering` staramy podzielić punkty na 'gęste' obszary oddzielone 'negęstymi' obszarami
-  - 
+W `Density-Based Clustering` staramy podzielić punkty na 'gęste' obszary oddzielone 'niegęstymi' obszarami
+
+#### Oznaczenia
+
+- $\epsilon$ - zdefiniowany przez nas promień okręgu
+- $mp$ - zdefiniowana przeznas liczba punktów która musi znaleźć się k kuli
+- $p$, $q$,... - punkty
+
+## Algorytm `DBSCAN` Podstawowe Definicje {.build}
+
+#### DEF(gęstość w punkcie $p$)
+
+Gęstością w punkie $p$ nazywamy liczbę punktów znajdująceych się w kuli o środku w punkie $p$ i promienu $\epsilon$.
+
+#### DEF(punkt główny)
+
+Punkt $p$ jest punktem głównym, gdy gęstoś dla punktu $p$ wynosi przynajmniej $mp$.
+
+#### DEF(punkty bezpośrednio osiągalne)
+
+Punkt $q$ jest bezpośrednio osiągalne z punktu głównego $p$, gdy znajdujące się w promienu $epsilon$. Żadne punkty nie są bezpośrednio osiągalne z punktów które nie są punktami głównymi.
+
+#### DEF(punkty osiągalne)
+
+Punkt $q$ jest osiągalny z punktu $p$ gdy istnieje ścierzka $p = p_1,\ldots,p_n = q$, w któej punkt $p_{i+1}$ jest bezposenido osiągalny z punktu $p_i$. Wzystkie punkty z wyjątkiem $q$ muszą być punktami głównymi.
+
+## Algorytm `DBSCAN` Podstawowe Definicje II {.build}
+
+#### DEF(punkty graniczne)
+
+Punkt $p$ nazywamy punktem granicznym, gdy nie jest punktem głównym, ale jest osiąglany.
+
+#### DEF(punkty odstające)
+
+Wszystkie punkty nieosiągalne z żadnego innego punku to punkty odstające.
+
+#### DEF(Klaster)
+
+Klastrem nazywamy maksymalny zbiór punktów osiągalnych (wszystko jedno czy głównych czy nie).
+
+## Algorytm `DBSCAN` dobór optymalnych $\epsilon$ i $mp$ {.build}
+
+## Algorytm `DBSCAN` problemy {.build}
+
+Algorytm słabo klasyfikuje
+
+- klastry o różnej gęstości
+- wysoko wymiarowe dane
+
+## R
+
+## Zbiór danych {.build}
+
+Będziemy pracować na zbiorze `multishapes` z pakietu `factoextra` (u nas przechowywany w zmiennej `ws`), oraz używać bibliotek `fpc` i `dbscan`
+
+```{r dataset_summary}
+summary(ws)
+str(ws)
+```
+
+## Zbiór danych 
+
+```{r}
+ws_original
+```
+
+## Zbiór danych 
+
+```{r}
+ws_kmeans
+```
+
+
+## Klasteryzacja z `DBSCAN` {.build}
+
+```{r dbscan1}
+ws_dbxcan <- fpc::dbscan(ws[, -3], eps = 0.16, MinPts = 5)
+
+pred_ws_DB <- as.factor(predict(ws_dbxcan))
+
+ggplot(data = ws[, -3], aes(x= x, y = y, colour = pred_ws_DB)) + geom_point() + ggtitle("Klasyfikacja DBSCAN")
+
+```
+
+
+## Dobieranie optymalnych parametrow `eps` i `MinPts` {.build}
+
+```{r dbscan2}
+dbscan::kNNdistplot(ws[, -3], k = 5)
+```
