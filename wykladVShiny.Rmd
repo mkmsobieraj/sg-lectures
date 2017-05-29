@@ -1,0 +1,491 @@
+---
+title: "Wykład V Shiny"
+output:
+  html_document: default
+  html_notebook: default
+runtime: shiny
+---
+
+### Wstęp
+
+Aby rozpocząć pracę z biblioteką `shiny` należy ją pobrać i załadować:
+
+```{r eval=FALSE}
+install.packages("shiny")
+```
+```{r}
+require("shiny")
+```
+
+### Tworzenie aplikacji
+
+Każda aplikacja składa się z co najmniej dwuch plików `R`
+znajdujących się w tym samum folderze.
+
+- `ui.R` - odpowiada za wygląd interface-u
+- `server.R` - odpowiada za backend
+
+najmniejsza (pusta) aplikacja Shiny wygląda następująco
+
+```{r ui1, eval=FALSE}
+shinyUI(fluidPage(
+  
+))
+```
+
+```{r server1, eval=FALSE}
+shinyServer(function(input, output){
+  
+})
+```
+
+lub jednego o następującej strukturze:
+
+```{r, eval=FALSE}
+ui <- shinyUI(
+        fluidPage("Hello World")
+    )
+server <- shinyServer(function(input, output) {
+    
+})
+```
+
+
+
+### Wstęp
+
+Najprostrza działająca aplikacja `shiny`:
+
+
+```{r}
+ui <- shinyUI(
+        fluidPage("Hello World")
+    )
+server <- shinyServer(function(input, output) {
+    
+})
+
+shinyApp(ui = ui, server = server)
+```
+
+### Layout
+
+- `fluidPage()` - najprostrzy sposób rzeby stworzyć domyślny prosty Layout
+dostosowany do okna przeglądarki
+    - `titlePanel()` - panel tytułowy
+    - `sidebarLayout()` - funkcja sterująca ukłądem paneli
+        - `sidebarPanel()` - panel boczny
+        - `mainPanel()` - panel główny
+        - `tabsetPanel()` - tworzy zakładki, żeby np. wyśwetlić w jednej 
+wykres, w drugiej tabele, w trzeciej   podsumowanie
+        - `navlistPanel()` - tworzy na szczycie strony pasek nawigacyjny z 
+przyciskami i listami rozwijanymi 
+        - `navbarPage()`
+        - `wellPanel()`
+        - `plotOutput()`
+
+
+### znaczniki HTML
+W `shiny` można używać funkcji, które są odpowednikami znczników HTML. Mają 
+one następującą konstrukcję: `tag(arg1, arg2,...)` gdzie 
+  -`tag` to nazwa znacznika
+  - `arg1` wartość którą normalnie byśmy umieścili między `<tab>` a `</tag>`
+  - `arg2, ...` kolejne parametry znacznika jak color, align itp
+lista dostępnych funkcji jest następująca 
+
+nazwa funkcji|nazwa znacznika
+---|---
+`p()`|`<p>`
+`h1()`|`<h1>`
+`h2()`|`<h2>`
+`h3()`|`<h3>`
+`h4()`|`<h4>`
+`h5()`|`<h5>`
+`h6()`|`<h6>`
+`a()`|`<a>`
+`br()`|`<br>`
+`div()`|`<div>`
+`span()`|`<span>`	
+`pre()`|`<pre>`	
+`code()`|`<code>`	
+`img()`|`<img>`
+`strong()`|`<strong>`	
+`em()`|`<em>`	
+
+### Przykład zastosowania `FluidPage` i kilku przykładowych znaczników HTML
+```{r ui2}
+ui <- shinyUI(fluidPage(
+  titlePanel("title panel"), # panel tytuowy
+  
+  sidebarLayout(position = 'right', # odwraca domuślną pozycję panelu głównego i bocznego
+    sidebarPanel("sidebar panel"), # tytaj umieszczamy przyciski suwaki itp
+    mainPanel( # tutaj umieszczamy wykresy tabel itp
+        h6("Episode IV", align = "center"),
+        h6("A NEW HOPE", align = "center"),
+        h5("It is a period of civil war.", align = "center"),
+        h4("Rebel spaceships, striking", align = "center"),
+        h3("from a hidden base, have won", align = "center"),
+        h2("their first victory against the", align = "center"),
+        h1("evil Galactic Empire.")
+    )
+  )
+))
+
+server <- shinyServer(function(input, output) {
+    
+})
+
+shinyApp(ui = ui, server = server)
+```
+
+### Grid layout
+Grid layout tworzymy wewnątrz funkcji `fludiPage()`, za pomocą funkcji `fluidRow()` i `column()`, tak jak na poniższym przykładzie 
+
+
+### Grid layout przykład
+```{r ui3}
+ui <-  shinyUI(fluidPage(
+  titlePanel("Title"),
+  fluidRow(
+    column(4,
+           wellPanel("some widgets")
+           ),
+    column(8, 
+           plotOutput("some plot")
+           )
+    ), # pierwszy wiersz
+  fluidRow(column(4,
+                  p("some content")
+                  ),
+           column(4,
+                  p("some content")
+                  ),
+           column(4,
+                  p("some content")
+                  )
+           ), # drugi wiersz
+  fluidRow(column(3, offset = 3, # kolumny można też przesuwać
+                  p("some content")
+                  ),
+           column(3, offset = 3,
+                  p("some content")
+                  )
+           ), # trzeci wiersz
+  fluidRow( # a także zagnieżdżać je w sobie
+    column(12,
+           "some content",
+           fluidRow(
+             column(6,
+                    "some content",
+                    fluidRow(
+                      column(6, 
+                             "some content"),
+                      column(6,
+                             "some content")
+                    )
+             ),
+             column(width = 6,
+                    "some content")
+           )
+    )
+  ) # czwarty wiersz
+))
+
+server <- shinyServer(function(input, output) {
+    
+})
+
+shinyApp(ui = ui, server = server)
+
+```
+
+### tabsetPanel przykład
+```{r ui4}
+mainPanel(
+  tabsetPanel(position = "below", # zakładki wyświetlane pod zawartością zamiast domyślnie nad
+    tabPanel("Plot", plotOutput("plot")), 
+    tabPanel("Summary", verbatimTextOutput("summary")), 
+    tabPanel("Table", tableOutput("table"))
+  )  
+)
+```
+
+### navbarPage przykład
+```{r ui5}
+shinyUI(navbarPage("My Application", # tytuł paka nawigacyjnego
+  tabPanel("Component 1"), # przycisk
+  tabPanel("Component 2"),
+  navbarMenu("More",   # lista rozwijana
+    tabPanel("Sub-Component A"),
+    tabPanel("Sub-Component B"))
+))
+```
+
+
+### Dodawanie widgetów
+
+Standardowe widgety w Shiny tworzymy za pomocą poniższych funkcji:
+
+funkcja| widget
+---|---
+`actionButton()`|Action Button
+`checkboxGroupInput()`|A group of check boxes
+`checkboxInput()`|A single check box
+`dateInput()`|A calendar to aid date selection
+`dateRangeInput()`|A pair of calendars for selecting a date range
+`fileInput()`|A file upload control wizard
+`helpText()`|Help text that can be added to an input form
+`numericInput()`|A field to enter numbers
+`radioButtons()`|A set of radio buttons
+`selectInput()`|A box with choices to select from
+`sliderInput()`|A slider bar
+`submitButton()`|A submit button
+`textInput()`|A field to enter text
+
+# Inputs
+
+- `..Input(inputId = "id", label = "label")` - funkcje za pomocą, 
+których przekazujemy parametry do serwera
+
+# Inputs wygląd 
+
+```{r ui7}
+shinyUI(fluidPage(
+  fluidRow(
+    
+    column(3,
+      h3("Buttons"),
+      actionButton("action",
+                   label = "Action Button"
+      ),
+      br(),
+      br(),
+      submitButton("Submit")
+    ),
+    column(3,
+      h3("Single checkbox"),
+      checkboxInput("checkbox",
+                    label = "Choice A",
+                    value = TRUE
+      )
+    ),
+    column(3,
+      checkboxGroupInput("checkGroup",
+                         label = h3("Checkbox group"),
+                         choices = list("choice 1" = 1,
+                                        "choice 2" = 2,
+                                        "choice 3" = 3
+                                        ),
+                         selected = 1
+      )
+    ),
+    column(3,
+      dateInput("date",
+      label = h3("date Input"),
+      value = "2016-01-01"
+      )
+      
+    )
+      
+  ),
+  fluidRow(
+    
+    column(3,
+      dateRangeInput("dates",
+                     label = h3("Datarange"),
+                     start  = "2001-01-01",
+                     end    = "2010-12-31",
+                     min    = "2001-01-01",
+                     max    = "2012-12-21",
+                     format = "mm/dd/yy",
+                     separator = " - "
+      )     
+    ),
+    column(3,
+      fileInput("file", label = h3("File input"))     
+    ),
+    column(3,
+      h3("Help text"),
+      helpText("Note: help text isn't a true widget,", 
+        "but it provides an easy way to add text to",
+        "accompany other widgets.")           
+    ),
+    column(3,
+      numericInput("num", 
+                   label = h3("Numeric input"), 
+                   value = 1)     
+      
+    )
+        
+  ),
+  fluidRow(
+    
+    column(3,
+      radioButtons("radio", label = h3("Radio buttons"),
+        choices = list("Choice 1" = 1, "Choice 2" = 2,
+                       "Choice 3" = 3),selected = 1)),
+    
+    column(3,
+      selectInput("select", label = h3("Select box"), 
+        choices = list("Choice 1" = 1, "Choice 2" = 2,
+                       "Choice 3" = 3), selected = 1)),
+    
+    column(3, 
+      sliderInput("slider1", label = h3("Sliders"),
+        min = 0, max = 100, value = 50),
+      sliderInput("slider2", "",
+        min = 0, max = 100, value = c(25, 75))
+      ),
+    
+    column(3, 
+      textInput("text", label = h3("Text input"), 
+        value = "Enter text..."))   
+  )
+))
+```
+
+# Inputs i Outputs Prosty Przykład zastosowania 
+
+```{r}
+ui <- shinyUI(fluidPage(
+    sliderInput(inputId = "num",
+                label = "Choose a number",
+                value = 25,
+                min = 1,
+                max = 100),
+    
+    plotOutput("hist")
+))
+
+server <- shinyServer(function(input, output){
+    output$hist <- renderPlot({
+        title <- "100 random normal values"
+        hist(rnorm(input$num), main = title)
+    })
+})
+
+shinyApp(ui = ui, server = server)
+```
+
+### wyświetlanie danych
+By wyświetlić dane musimy:
+1. stworzyć dla nich miejsce w `ui.R`
+2. wygenerować je w `server.R`
+
+### Miesce na wyświetlanie danych
+
+możemy skożystać z następujących sposobóW wyświetlania danych w `ui.R`
+
+funkcja|wynik
+---|---
+`htmlOutput()`|czysty HTML
+`imageOutput()`|obraz
+`plotOutput()`|wykres
+`tableOutput()`|tablica
+`textOutput()`|tekst
+`uiOutput()`|czysty HTML
+`verbatimTextOutput()`|tekst
+
+### Renderowanie danych
+
+możemy skożystać z następujących sposobóW renderowania danych w `server.R`
+
+funkcja|wynik
+---|---
+`renderImage({})`|obraz (zapisany jako link do pliku źródłowego)
+`renderPlot({})`|wykres
+`renderPrint({})`|cokolewiek co wyświetlamy za pomocą `print()`
+`renderTable({})`|ramka danych, macierz, co kolwiek innego o tabelarycznej strukturze
+`renderText({})`|ciąg znaków np. "Hello Wolrd"
+`renderUI({})`| Shiny tag object lub HTML 
+
+### odwołania między ui a serwerem 
+
+wyrenderowany wynik przypisujemy zwykle do pola `output$nazwa` by ją wyświetlić później w `ui.R` np `output$plot1 <- renderPlot({})`, `plotOutput("plot1")`
+
+w pilku `server.R` możemy się odnosić do wartości z widgetów w następujący sposób: `nazwa_widgetu$zmienna`
+
+### Moment renderowania danych
+
+Dane możemy umieścić w trzech miejscach, w zależności od tego gdzie je umieścimy, będą one wykonywane w różnym momęcie
+
+```{r server3, eval=FALSE}
+# Server R
+
+# gdy umieścimy kod tutaj, zostanie on wykonany gdy aplikacjia zostanie załadowana (wykonanie runApp())
+
+shinyServer(function(input, output){
+  
+  # gdy umieścimy kod tutaj zostanie on wykonany za każdym razem, gdy urzytkownik odwiedzi aplikacjię
+  
+  output$map <- renderPlot({
+    
+    # gdy umieścimy kod tutaj zostanie on wywołany za każdym razem, gdy urzytkownik zmieni coś w widgecie
+    
+  })
+})
+```
+
+### Reactive
+
+`Reactive` expressions aktualizują się, gdy zostanie zmieniony, któryś z zależnych widgetów tworzymy je w następujący sposób:
+
+```{r server4, eval=FALSE}
+dataInput <- reactive({
+  someData[, col = widget$value]
+})
+```
+
+Do `Reactive expressions` odwołujemy się w dalszej części kodu w następujący sposób
+`dataInput()`.
+
+### Isolate
+
+`isolate` stotsujemy, gdy chcemy by jakaś wartość nie odpowiadała na zmianę (nie była reaktywna) np.
+
+```{r server5, eval=FALSE}
+output$hsit <- renderPlot({
+  hist(rnomr(100),
+       main = isolate(input$title))
+})
+```
+powyższy kod bez isolate za każdym razem po zmianie tytułu na nowo by losował rozkład.
+
+### observeIvent()
+
+`observeIvent()`
+
+```{r observeIvent, eval=FALSE}
+observeEvent(input$button, {print(input$button)})
+```
+
+`{print(input$button)}` wykona się tylko wtdy gdy zostanie wykonana akcja na `input$button`
+
+### observe
+
+`observe()` działa podobnie do `observeEvent()`, ale różni się składnią,
+zostanie wykonane gdy zmieni się jakikolwiek jaka kolwiek wartość `input$value` zawarta w `observe`.
+
+### eventReactive
+
+`eventReactive()` słóży do opóźniania reakcji, np zmieniam wartość na sliderze lub w polu ale wykres przelicza się dopiero po kliknięciu przycisku
+
+```{r, eventReactive, eval=FALSE}
+data <- eventReactive(input$button, {rnorm(input$num)})
+```
+
+Wartość w `{rnorm(input$num)}` zostanie przeliczona tylko wtedy gdy zmieni się wartość `input$button`
+
+### reactiveValues
+
+`reactiveValues()` - tworzy listę wartości reaktywnych, którymi możemy manipulować w następujący sposób
+```{r, eval=FALSE}
+rv <- reactiveValues(data = rnorm(100)) # może przyjąć więcej niż jeden argument np. data2 = runif(100)
+
+observeEvent(input$normalny, {rv$data <- rnorm(100)})
+observeEvent(input$uniform, {rv$data <- runif(100)})
+
+output$hist <- renderPlot({
+  hist(rv$data)
+})
+```

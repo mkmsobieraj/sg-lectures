@@ -91,8 +91,9 @@ f(x) = \{
 $$
 ```{r required_packages, include=FALSE, eval=TRUE}
 #install.packages("GGally")
-# install.packages("SDMTools")
+#install.packages("SDMTools")
 #install.packages("leaps")
+#install.packages("caret", dependencies = T)
 require("leaps")
 require('ggplot2')
 require("GGally")

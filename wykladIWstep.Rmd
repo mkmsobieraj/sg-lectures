@@ -73,6 +73,8 @@ Pokarzemy przykładowe użycie powyższych funkcji na przykładzie zbioru danych
 
 Przygotowanie danych do dalszej pracy
 ```{r required_packages, include=FALSE, eval=TRUE}
+#install.packages('dplyr')
+#install.packages('tidyr')
 require('dplyr')
 require('tidyr')
 #options(encoding = 'UTF-8')
