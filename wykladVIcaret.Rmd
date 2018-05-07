@@ -1,0 +1,114 @@
+---
+title: "Wykład VI - caret overview"
+author: "Mateusz Sobieraj"
+date: "3 kwiecien 2017"
+output:
+  ioslides_presentation: null
+  slidy_presentation: default
+  css: dependencies/styles.css
+logo: dependencies/grosz.png
+smaller: yes
+encoding: UTF-8
+transition: slower
+widescreen: no
+---
+
+```{r required_packages, include=FALSE, eval=TRUE}
+library(dplyr)
+library(tidyr)
+library(ggplot2)
+library(GGally)
+```
+
+  
+## Wizualizacja ggplot zamiast caret I
+
+```{r prepare_my_plot}
+my_plot <- function(data, mapping, ...) {
+  ggplot(data = data, mapping = mapping) +
+    geom_point(...) +
+    geom_smooth(method = lm,
+                se = FALSE,
+                linetype = 2,
+                color = "gray50") +
+    stat_ellipse(type = "norm")
+    
+}
+```
+
+## Wizualizacja ggplot zamiast caret I
+
+```{r pairs_code}
+iris_pairs <- iris %>% 
+  ggpairs(aes(fill = Species,
+              colour = Species,
+              alpha = .5,
+              shape = Species),
+          columns = 1:4,
+          upper = list(continuous = "cor",
+                       combo = "box",
+                       discrete = "blank"),
+          lower = list(continuous  = my_plot),
+          diag = list())
+```
+
+## Wizualizacja ggplot zamiast caret I
+
+```{r pairs_plot, echo=FALSE}
+iris_pairs
+```
+
+## Wizualizacja ggplot zamiast caret II 
+
+```{r density_code}
+iris_density <- iris %>%
+  gather(key = "faeture", value = "value", -Species) %>% 
+  ggplot(aes(value, colour = Species, linetype = Species)) + 
+  geom_density() +
+  geom_rug() +
+  facet_wrap(~faeture, nrow = 1) +
+  theme(legend.position = "top", legend.box = "horizontal")
+```
+
+## Wizualizacja ggplot zamiast caret II 
+
+```{r density_plot, echo=FALSE}
+iris_density
+```
+
+## Wizualizacja ggplot zamiast caret III
+
+```{r box_code}
+iris_box <- iris %>%
+  gather(key = "faeture", value = "value", -Species) %>% 
+  ggplot(aes(Species, value)) + 
+  geom_boxplot() +
+  stat_summary(fun.y = mean, geom = "point", size = 2, colour = "red") +
+  facet_wrap(~faeture, nrow = 1) +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1))
+```
+
+## Wizualizacja ggplot zamiast caret III
+
+```{r box_plot, echo=FALSE}
+iris_box
+```
+
+## Wizualizacja ggplot zamiast caret IV
+
+```{r scatter_code}
+iris_scatter <- iris %>%
+  ggplot(aes(Sepal.Length, Petal.Length)) + 
+  geom_point(alpha = .5, colour = "#000000") +
+    geom_smooth(method = "gam",
+              se = FALSE,
+              color = "#ff9060") +
+  facet_wrap(~Species, nrow = 1)
+
+```
+
+## Wizualizacja ggplot zamiast caret IV
+
+```{r scatter_plot, echo=FALSE}
+iris_scatter
+```
