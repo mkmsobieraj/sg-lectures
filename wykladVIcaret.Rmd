@@ -14,13 +14,23 @@ widescreen: no
 ---
 
 ```{r required_packages, include=FALSE, eval=TRUE}
+library(MASS)
 library(dplyr)
 library(tidyr)
 library(ggplot2)
 library(GGally)
 library(caret)
+library(randomForest)
 iris_con <- iris %>% select(-Species)
 iris_disc <- iris %>% select(Species) 
+fly <- read.csv("dependencies/FlightDelays.csv")
+fly <- fly %>%
+  select(- flightnumber, -tailnu, -date, -dest) %>%
+  mutate(delay = ifelse(delay == "delayed", 1, 0) %>% as.factor())
+Boston <- Boston %>% 
+  mutate(chas = as.factor(chas))
+
+detach("package:MASS", unload = TRUE)
 ```
 
   
@@ -134,19 +144,37 @@ iris %>%
   as_tibble()
 ```
 
-## `findCorrelation`
+## `findCorrelation` I
 
 ```{r}
 corelation <- cor(iris_con)
 findCorrelation(corelation, cutoff = 0.5)
 ```
 
+## `findCorrelation` II
+
+```{r}
+mask <- lower.tri(corelation)
+cor_df <- ifelse(mask, corelation, NA)
+colnames(cor_df) <- colnames(corelation)
+rownames(cor_df) <- rownames(corelation)
+
+cor_df <- cor_df %>% 
+    as_tibble(rownames = "var1") %>% 
+    gather(key = "var2", value = "corelation", -var1) %>% 
+    filter(!is.na(corelation))
+    
+cor_df %>% 
+  filter(abs(corelation) > 0.5) %>% 
+```
+
+
 ## Dzielenie danych `createDataPartition` I
 
 Zalety `createDataPartition` to
 
 - wygoda
-- dane podzielone sa rownómiernie
+- dane podzielone sa równomiernie
 - sa zachowane proporcje w zbiorach
 
 Wady 
@@ -190,12 +218,12 @@ categories <- iris %>%
     length() %>% 
     sample(1:3, ., replace = TRUE, prob = c(0.6, 0.3, 0.1))
 
-idexes <- 
+indexes <- 
   sapply(1:3, function(flag, categories){
     which(categories %in% flag)  
   }, categories)
 
-names(idexes) <- c("train", "test", "validation")
+names(indexes) <- c("train", "test", "validation")
 ```
 
 ## Dzielenie danych `createDataPartition` III
@@ -203,13 +231,13 @@ names(idexes) <- c("train", "test", "validation")
 Lista indexów
 
 ```{r, echo = FALSE}
-idexes
+indexes
 ```
 
 Proporcje indexów
 
 ```{r, echo = FALSE}
-idexes %>% sapply(length) / dim(iris)[1]
+indexes %>% sapply(length) / dim(iris)[1]
 ```
 
 
@@ -227,4 +255,113 @@ Zastosowania funkcji `preProcess`
 preProcValues <- preProcess(train_con, method = c("center", "scale"))
 predict(preProcValues, train_con)
 predict(preProcValues, test_con)
+```
+
+## Krzywe diagnostyczne model
+
+```{r}
+index_b <- createDataPartition(Boston$chas, p = .6, list = F)
+train_b <- Boston %>% slice(index_b)
+test_b <- Boston %>% slice(-index_b)
+
+
+m1 <- glm(formula = chas ~ ., data = train_b, family = binomial)
+m2 <-  step(m1, direction = "forward", trace = FALSE)
+m3 <- randomForest(formula = as.factor(chas) ~ ., data = train_b)
+
+```
+
+## Krzywe diagnostyczne I przygotowanie danych
+
+```{r}
+
+
+predictions <- bind_rows(
+  train_b %>% mutate(type = "train")
+          %>% mutate(prob = predict(m1, train_b, type = "response")),
+  test_b  %>% mutate(type = "test")
+          %>% mutate(prob = predict(m1, test_b, type = "response"))  
+)
+
+head(predictions)
+```
+
+## Krzywe diagnostyczne II hsiotgam I
+
+```{r}
+plot_hist <- predictions %>%
+  ggplot(aes(prob, fill = type)) +
+  geom_histogram(binwidth = .01) +
+  facet_wrap(~chas + type)
+
+```
+
+## Krzywe diagnostyczne II hsiotgam I
+
+```{r}
+plot_hist
+```
+
+
+## Krzywe diagnostyczne III hsiotgam I
+
+```{r}
+plot_hist2 <- predictions %>%
+  ggplot(aes(prob, fill = type)) +
+  geom_histogram(binwidth = .01, alpha = 0.5) +
+  facet_wrap(~chas)
+```
+
+## Krzywe diagnostyczne III hsiotgam II
+
+```{r}
+plot_hist2
+```
+
+## Miary jakości modelu I
+
+```{r}
+summary <- predictions %>% 
+  filter(type == "test") %>% 
+  rename(actual = chas) %>% 
+  mutate(predicted = ifelse(prob > 0.3, 1, 0) %>% as.factor()) %>% 
+  select(actual, predicted, prob)
+
+summary
+```
+
+## Miary jakości modelu II `confusionMatrix`
+
+
+```{r}
+cM <- confusionMatrix(data = summary$predicted, reference = summary$actual, positive = "1")
+```
+
+
+```{r}
+cM$overall
+```
+
+```{r}
+cM$table
+```
+
+## Miary jakości modelu III `twoClassSummary`
+
+Uwaga tylko dla dwuch klas
+
+```{r}
+summary_cf <- summary %>% 
+              mutate("failure" = 1 - prob) %>% 
+              rename("succes" = prob,
+                     obs = actual,
+                     pred = predicted) %>% 
+              mutate(obs = ifelse(obs == 1, "succes", "failure") %>% as.factor()) %>% 
+              mutate(pred = ifelse(pred == 1, "succes", "failure") %>% as.factor()) %>% 
+             as.data.frame()
+
+twoClassSummary(summary_cf, lev = levels(summary_cf$obs))
+
+
+
 ```
