@@ -21,20 +21,29 @@ library(ggplot2)
 library(GGally)
 library(caret)
 library(randomForest)
+Boston <- Boston %>% 
+  mutate(chas = as.factor(chas))
+detach("package:MASS", unload = TRUE)
 iris_con <- iris %>% select(-Species)
 iris_disc <- iris %>% select(Species) 
 fly <- read.csv("dependencies/FlightDelays.csv")
 fly <- fly %>%
   select(- flightnumber, -tailnu, -date, -dest) %>%
   mutate(delay = ifelse(delay == "delayed", 1, 0) %>% as.factor())
-Boston <- Boston %>% 
-  mutate(chas = as.factor(chas))
-
-detach("package:MASS", unload = TRUE)
 ```
+
+
+
+## Wizualizacja ggplot zamiast caret I
+
+Wizualizacja danych z pomocą `caret` jest łatwa do zastąpienia, przez użycie 
+bardziej elastycznego rozwiązania z `ggplot2`.
 
   
 ## Wizualizacja ggplot zamiast caret I
+
+
+Najpierw tworzymy funkcję, która jest wraperem dla funkcji `ggplot`.
 
 ```{r prepare_my_plot}
 my_plot <- function(data, mapping, ...) {
@@ -50,6 +59,8 @@ my_plot <- function(data, mapping, ...) {
 ```
 
 ## Wizualizacja ggplot zamiast caret I
+
+Następnie używamy jej by wyrysować na dolnej macierzy zmienne ciągłe.
 
 ```{r pairs_code}
 iris_pairs <- iris %>% 
@@ -73,6 +84,8 @@ iris_pairs
 
 ## Wizualizacja ggplot zamiast caret II 
 
+Rysowanie wykresów gęstości jest jeszcze prostrze.
+
 ```{r density_code}
 iris_density <- iris %>%
   gather(key = "faeture", value = "value", -Species) %>% 
@@ -90,6 +103,8 @@ iris_density
 ```
 
 ## Wizualizacja ggplot zamiast caret III
+
+A teraz box plot ...
 
 ```{r box_code}
 iris_box <- iris %>%
@@ -109,6 +124,8 @@ iris_box
 
 ## Wizualizacja ggplot zamiast caret IV
 
+i scatter plot.
+
 ```{r scatter_code}
 iris_scatter <- iris %>%
   ggplot(aes(Sepal.Length, Petal.Length)) + 
@@ -127,15 +144,10 @@ iris_scatter
 ```
 
 
-## Tworzenie zmiennych 0-1 z `dummyVars`
-
-```{r}
-iris %>%
-  model.matrix(Species ~ . ^ 2, data = .) %>% as_tibble() %>% 
-  as_tibble() %>% head()
-```
 
 ## Tworzenie zmiennych 0-1 z `dummyVars`
+
+Zmienne binarne tworzymy podając odpowiednią formułe...
 
 ```{r}
 iris %>% 
@@ -144,7 +156,21 @@ iris %>%
   as_tibble()
 ```
 
+## Tworzenie zmiennych 0-1 z `dummyVars`
+
+... funkcja `dummyVars` działa bardzo podobnie do wbudowanej w `R` funkcji `model.matrix`.
+
+```{r}
+iris %>%
+  model.matrix(Species ~ . ^ 2, data = .) %>% as_tibble() %>% 
+  as_tibble() %>% head()
+```
+
+
 ## `findCorrelation` I
+
+Za pomocą `findCorrelation` możemy łatwo znaleść zmienne o zbyt dużej korelacji i 
+je wyżucić.
 
 ```{r}
 corelation <- cor(iris_con)
@@ -152,6 +178,8 @@ findCorrelation(corelation, cutoff = 0.5)
 ```
 
 ## `findCorrelation` II
+
+Alternatywnie możemy napisać własny krutki skrypt.
 
 ```{r}
 mask <- lower.tri(corelation)
@@ -165,7 +193,7 @@ cor_df <- cor_df %>%
     filter(!is.na(corelation))
     
 cor_df %>% 
-  filter(abs(corelation) > 0.5) %>% 
+  filter(abs(corelation) > 0.5) 
 ```
 
 
@@ -179,7 +207,7 @@ Zalety `createDataPartition` to
 
 Wady 
 
-- nie da się podzielić zbioru na trzy części
+- nie da się podzielić zbioru na trzy części (łatwo obejść dzieląc jeden ze zbiorów dwa razy)
 
 ## Dzielenie danych `createDataPartition` I
 
@@ -196,14 +224,15 @@ test_con <- iris_con %>% slice(-index)
 
 ## Dzielenie danych `createDataPartition` II
 
-Proporcje w grupie treningowej
+Proporcje kategorii w zbiorze treningowym są idealne ...
 
 ```{r}
 table(train$Species)
 ```
 
+## Dzielenie danych `createDataPartition` II
 
-Proporcje w grupie testowej
+podobnie jak w zbiorze testowym.
 
 ```{r}
 table(test$Species)
@@ -211,7 +240,10 @@ table(test$Species)
 
 ## Dzielenie danych `createDataPartition` III
 
+Możemy szybko napisać skrypt który losjuje z zadaną przez nas częstością ...
+
 ```{r}
+set.seed(100)
 categories <- iris %>% 
     select(Species) %>%
     pull() %>%
@@ -228,20 +260,38 @@ names(indexes) <- c("train", "test", "validation")
 
 ## Dzielenie danych `createDataPartition` III
 
-Lista indexów
-
 ```{r, echo = FALSE}
 indexes
 ```
 
-Proporcje indexów
+## Dzielenie danych `createDataPartition` III
+
+Ale zarówno liczności zbiorów ...
 
 ```{r, echo = FALSE}
 indexes %>% sapply(length) / dim(iris)[1]
 ```
 
 
-## `preProcess` I
+## Dzielenie danych `createDataPartition` III
+
+jak i rozkład kategorii w grupach ...
+
+```{r, echo= FALSE}
+df_indexes <- stack(indexes)
+
+df_indexes %>% 
+  inner_join(iris %>% mutate(values = iris %>% rownames() %>% as.integer())) %>% 
+  count(ind, Species) %>% 
+  spread(Species, n)
+```
+
+
+## Dzielenie danych `createDataPartition` III
+
+są przybliżone, a lepsza implementacja wymaga trochę więcej pracy.
+
+## Przygotowanie danych z `preProcess` I
 
 Zastosowania funkcji `preProcess`
 
@@ -249,15 +299,17 @@ Zastosowania funkcji `preProcess`
 - centrowanie
 - transformacje zmiennych (`BoxCox`, `YeoJohnson` itp.)
 
-## `preProcess` II
+## Przygotowanie danych z  `preProcess` II
 
 ```{r}
 preProcValues <- preProcess(train_con, method = c("center", "scale"))
-predict(preProcValues, train_con)
-predict(preProcValues, test_con)
+predict(preProcValues, train_con) %>% head()
+predict(preProcValues, test_con) %>% head()
 ```
 
-## Krzywe diagnostyczne model
+## Krzywe diagnostyczne I przykładowe modele
+
+Tworzę przykładowe modele do dalszej analizy
 
 ```{r}
 index_b <- createDataPartition(Boston$chas, p = .6, list = F)
@@ -272,6 +324,8 @@ m3 <- randomForest(formula = as.factor(chas) ~ ., data = train_b)
 ```
 
 ## Krzywe diagnostyczne I przygotowanie danych
+
+Łącze ze sobą próbę testową i treningową, oraz dodaję prawdopodobieństwa sukcesu
 
 ```{r}
 
@@ -320,6 +374,8 @@ plot_hist2
 
 ## Miary jakości modelu I
 
+Tworzę ramkę danych z podsumowaniem wyników.
+
 ```{r}
 summary <- predictions %>% 
   filter(type == "test") %>% 
@@ -327,28 +383,47 @@ summary <- predictions %>%
   mutate(predicted = ifelse(prob > 0.3, 1, 0) %>% as.factor()) %>% 
   select(actual, predicted, prob)
 
-summary
+summary %>% head()
 ```
 
 ## Miary jakości modelu II `confusionMatrix`
 
 
+W łatwy sposób mogę otrzymać podsumowanie.
+
 ```{r}
 cM <- confusionMatrix(data = summary$predicted, reference = summary$actual, positive = "1")
+cM
 ```
 
+## Miary jakości modelu II `confusionMatrix`
+
+Mam łatwy dostęp do tabeli kondyngencji.
+
+```{r}
+cM$table 
+```
+
+## Miary jakości modelu II `confusionMatrix`
+
+A także do każdej statsystyki.
 
 ```{r}
 cM$overall
+cM$overall[1]
 ```
 
-```{r}
-cM$table
-```
+## Miary jakości modelu III
 
-## Miary jakości modelu III `twoClassSummary`
+Dla predykcji w któej występują tylko dwie klasy, mogę używać funckji 
 
-Uwaga tylko dla dwuch klas
+- `twoClassSummary`
+- `prSummary`
+
+## Miary jakości modelu III
+
+Uwaga, najwygodniej te funkcje stosuje się spełniając ich interface (przekazując 
+im ramkę danych z opdopwiednimi nazwami kolumn)
 
 ```{r}
 summary_cf <- summary %>% 
@@ -359,9 +434,24 @@ summary_cf <- summary %>%
               mutate(obs = ifelse(obs == 1, "succes", "failure") %>% as.factor()) %>% 
               mutate(pred = ifelse(pred == 1, "succes", "failure") %>% as.factor()) %>% 
              as.data.frame()
+summary_cf %>% head()
+```
 
-twoClassSummary(summary_cf, lev = levels(summary_cf$obs))
+## Miary jakości modelu IV `twoClassSummary`
 
+Wektor zwracany po użyciu `twoClassSummary` również daje mi łątwy dąstep do statystyk.
 
+```{r}
+tCS <- twoClassSummary(summary_cf, lev = levels(summary_cf$obs))
+tCS
+tCS[1]
+```
 
+## Miary jakości modelu IV `prSummary`
+
+Podobnie jest w przypadku funkcji `prSummary` 
+
+```{r}
+pS <- prSummary(summary_cf, lev = levels(summary_cf$obs))
+pS[1]
 ```
