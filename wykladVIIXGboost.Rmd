@@ -23,7 +23,6 @@ library(ggnet)
 library(ggplot2)
 ```
 
-
 ## Przygotowanie środowiska 
 
 ```{r}
@@ -54,7 +53,7 @@ test <- agaricus.test
 
 ## Drzewa daecyzyjne
 
-<img src = "dependencies/tree1.png" />
+<img src = "dependencies/tree1.png" width="75%" height="75%"/>
 
 ## Drzewa daecyzyjne
 
@@ -75,7 +74,7 @@ gdzie
 
  - $K$ - liczba drzew
  - $f_k$ - k-te drzewo
- - $\mathfrak{F}$ przestrzeń funkcyjna drzew decyzyjnych$
+ - $\mathfrak{F}$ przestrzeń funkcyjna drzew decyzyjnych
 
 Przestrzeń parametrów
 
@@ -103,7 +102,7 @@ $$
 \dots \\
 \hat{y}_i^{(K)} = \sum_{k = 0}^K f_k(x_i) = \hat{y}_i^{(K-1)} + f_K(x_i)
 $$
-gdzie $\hat{y}_\_$ - model w danym momencie treningu dla obserwacji $i$
+gdzie $\hat{y}_i^{(\_)}$ - model w danym momencie treningu dla obserwacji $i$.
 
 ## Uczenie wybór następnego drzewa w algorytmie I
 
@@ -176,7 +175,7 @@ $$
 
 ## Wykożystanie wzoru taylora
 
-Potraktujmy funkcję straty $$l$$ jako funkcję jednego (drugiego) argumentu $\hat{y}$
+Potraktujmy funkcję straty $l$ jako funkcję jednego (drugiego) argumentu $\hat{y}$
 
 Oraz trzymając się notacj ze wzrou Talora
 
@@ -198,12 +197,12 @@ $$
 O^t = \sum_{i = 1}^n [l(y_i, \hat{y}_i^{t-1}) + f_t(x_i)g_i + \frac{1}{2}f_t(x_i)^2h_i] + \Omega(f_t) + c_1
 $$
 
-## Wykożystanie wzoru taylora 
+## Wykożystanie wzoru Taylora 
 
 oraz dla błędu kwadratowego
 
 $$
-  O^t = \sum_{i = 1}^n [l(y_i, \hat{y}_i^{t-1}) + 2 (y_i - \hat{y_i}^{t-1}) f_t(x_i) +
+  O^t = \sum_{i = 1}^n [l(y_i, \hat{y}_i^{t-1}) + 2 (y_i - \hat{y_i}^{t-1}) f_t(x_i) + \\
   f_t(x_i)^2] + \Omega(f_t) + c_1
 $$
 
@@ -212,13 +211,13 @@ $$
 Po usunięciu stałych otrzymujemy
 
 $$
-O^t = \sum_{i = 1}^n [f_t(x_i)g_i + \frac{1}{2}f_t(x_i)^2h_i] + \Omega(f_t)
+O^t \approx \sum_{i = 1}^n [f_t(x_i)g_i + \frac{1}{2}f_t(x_i)^2h_i] + \Omega(f_t)
 $$
 
 oraz dla błędu kwadratowego
 
 $$
-O^t = \sum_{i = 1}^n [2 (y_i - \hat{y_i}^{t-1}) f_t(x_i) + f_t(x_i)^2] + \Omega(f_t)
+O^t \approx \sum_{i = 1}^n [2 (y_i - \hat{y_i}^{t-1}) f_t(x_i) + f_t(x_i)^2] + \Omega(f_t)
 $$
 
 ## Definicja drzewa
@@ -230,11 +229,136 @@ Niech
 - $w \in \mathbb{R}^T$ - wektor wag (scoringow)
 - $q: \mathbb{R}^d \rightarrow \{1 \dots T\}$ - struktóa drzewa (to co widzimy jako ify)
 
-WóWczas drzewo definiujemy następująco
+Wówczas drzewo definiujemy następująco
 
 $$
 f_t(x) = w_{q(x)}
 $$
+
+## Definicja drzewa
+
+Przykład
+
+Spróbujmmy przedstawić poniższe drzewo w przedstawionej w poprzednim slaidzie notacji.
+
+<img src = "dependencies/tree_def_example.png" width="75%" height="75%"/>
+
+## Definicja drzewa
+
+- $w = [0.2, 0.15, 0.5]$
+- $T = [1, 2, 3]$
+- $q(x) = I_{balance <= 1000} * 3 +  \\  I_{balance > 1000} (I_{is\_young = 1} + I_{is\_young = 0} * 2)$
+
+## Definicja złożoności drzewa
+
+Złożoność dżewa zdefiniujmy następująco
+
+$$
+\Omega(f_t) = \gamma T + \frac{1}{2} \lambda \sum_{j = 1}^T w_j^2
+$$
+Uwaga
+Każemy jednocześnie liczbę liści jaki i wielkość współczynników.
+
+
+## Powrót do funkcji celu 
+
+Zdefiniujmy zbiór wszystkich indeksów, należących do liścia $j$: 
+
+$$I_j = \{i|q(x_i) = j\}$$
+
+Ponieważ, każda pobserwacja jest jednoznacznie przypożądkowana do liścia, zachodzi następująca róWność
+
+$$\sum_{i = 1}^n x_i = \sum_{i = j}^T \sum_{i \in I_j} x_i$$
+
+## Powrót do funkcji celu 
+
+Nasza obecna forma funkcji celu jest następująca
+
+$$
+O^t \approx \sum_{i = 1}^n [f_t(x_i)g_i + \frac{1}{2}f_t(x_i)^2h_i] + \Omega(f_t) = \\
+\sum_{i = 1}^n [f_t(x_i)g_i + \frac{1}{2}f_t(x_i)^2h_i] + \gamma T + \frac{1}{2} \lambda \sum_{j = 1}^T w_j^2 =
+$$
+
+Następnie z definicj drzewa $f_t(x) = w_{q(x)}$
+
+$$
+\sum_{i = 1}^n [w_{q(x_i)}g_i + \frac{1}{2}w_{q(x_i)}^2h_i] + \gamma T + \frac{1}{2} \lambda \sum_{j = 1}^T w_j^2
+$$
+oraz z poprzedniej własności, oraz ponieważ w każdym liściu waga $w_\_$ jest taka sama mamy
+
+## Powrót do funkcji celu 
+
+$$
+\sum_{i = j}^T [(\sum_{i \in I_j} g_i) w_j + \frac{1}{2}(\sum_{i \in I_j} h_i)w_j^2] +
+\gamma T + \frac{1}{2} \lambda \sum_{j = 1}^T w_j^2 =\\
+\sum_{i = j}^T [(\sum_{i \in I_j} g_i) w_j + \frac{1}{2}(\sum_{i \in I_j} h_i + \lambda)w_j^2] + \gamma T
+$$
+
+Otrzymaliśmy sumę $T$ równań kwadratowych po $w_\_$.
+
+## Własności funkcji kwadratowej
+
+Niech
+
+$$
+f(x) = \frac{1}{2} a x ^ 2 + b x + c \quad c > 0
+$$
+Własności 1
+
+$$argmin_x(f) = - \frac{b}{a}$$
+Istotnie 
+
+$$
+f`(x) = ax + b \\
+f`(x) = 0 \iff ax + b = 0 \iff x = - \frac{b}{a}
+$$
+
+## Własności funkcji kwadratowej
+
+Własność 2
+
+$$\min(f) = - \frac{1}{2}\frac{b^2}{a} + c$$
+Istotnie 
+
+$$
+f(argmin_x(f)) = \frac{1}{2} a argmin_x(f) ^ 2 + b argmin_x(f) + c = \\
+\frac{1}{2} a (- \frac{b}{a}) ^ 2 + b (- \frac{b}{a}) + c = \\
+\frac{1}{2} \frac{b^2}{a} - \frac{b^2}{a} + c  =  - \frac{1}{2}\frac{b^2}{a} + c
+$$
+
+## Powrót do funkcji celu 
+
+Niech:
+
+- $G_j = \sum_{i \in I_j} g_i$
+- $H_j = \sum_{i \in I_j} h_i$
+
+Wówczas funkcja celu przyjmuje postać
+
+$$
+\sum_{i = j}^T [G_j w_j + \frac{1}{2}(H_j + \lambda)w_j^2] + \gamma T
+$$
+
+## Powrót do funkcji celu 
+
+Załóżmy teraz, żę struktóra drzewa jest $q(x)$ jeststała, wówczas optymalne wagi
+z własności funkcji kwadratowej są postaci $w_j* = \frac{G_j}{H_j + \lambda}$. 
+Oraz wartość funkcji celu 
+
+$$
+O^t = \sum_{i = j}^T \frac{G_j^2}{H_j + \lambda} + \gamma T
+$$
+## Powrót do funkcji celu 
+
+## Przykład
+
+## Znjadowanie najleprzego drzewa
+
+## Znjadowanie najlepszego drzewa w praktyce
+
+Uwaga 
+
+$\sum_{i = j}^T \frac{G_j^2}{H_j + \lambda}$ ta wartość mówi jak dobra jest struktóa naszego drzewa
 
 ## Nauka drzewa dla jednej zmiennej
 
