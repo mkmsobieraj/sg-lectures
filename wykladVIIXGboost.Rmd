@@ -1,0 +1,322 @@
+---
+title: "XGBoost"
+author: "Mateusz Sobieraj"
+date: "19 maja 2018"
+output: 
+  ioslides_presentation:
+    css: dependencies/styles.css
+    logo: dependencies/grosz.png
+logo: dependencies/grosz.png
+smaller: yes
+encoding: UTF-8
+transition: slower
+widescreen: no
+---
+
+```{r setup, include=FALSE}
+# knitr::opts_chunk$set(echo = FALSE)
+library(dplyr)
+library(ggplot2)
+library(GGally)
+library(igraph)
+library(ggnet)
+library(ggplot2)
+```
+
+
+## Przygotowanie środowiska 
+
+```{r}
+library(xgboost)
+data(agaricus.train, package = 'xgboost')
+data(agaricus.test, package = 'xgboost')
+train <- agaricus.train
+test <- agaricus.test
+```
+
+## opis danych
+
+
+```{r}
+```
+
+
+## Oznaczenia 
+
+- $d$ - liczba zmiennych
+- $\mathbb{x}_i \in \mathbb{R}$ - i-ty wektor miennych objaśniających
+- $y_i$ - i-ta wartość zmiennej objeśnianej
+- $\hat{y_i}$ - i-ta predykcja
+- $\Theta$ - zbiór parametrów modelu
+- $L(\Theta)$ - funkcja straty
+- $\Omega(\Theta)$ - regularyzacja
+- $O(\Theta) = L(\Theta) + \Omega(\Theta)$  - funckja celu
+
+## Drzewa daecyzyjne
+
+<img src = "dependencies/tree1.png" />
+
+## Drzewa daecyzyjne
+
+- niezależne od skali zmiennych 
+- łatwo skalowalne
+- uczą się ogólnych zależności między cechami
+- łatwo implementowalne
+- jeżeli płytkie, wówaczas mają małą wariancję
+
+## Założenia XGboost
+
+Model definiujemy w następujący sposób
+
+$$
+\hat{y_i} = \sum_{k = 1}^K f_k(x_i), \quad f_k \in  \mathfrak{F}
+$$
+gdzie
+
+ - $K$ - liczba drzew
+ - $f_k$ - k-te drzewo
+ - $\mathfrak{F}$ przestrzeń funkcyjna drzew decyzyjnych$
+
+Przestrzeń parametrów
+
+- $\Theta = \{f_1, f_2, \dots, f_K\}$
+
+## Funkcja celu
+
+$$O(\Theta ) = \sum_{i = 1} ^ n l(y_i, \hat{y_i}) + \sum_{k = 1}^K \Omega(f_k)$$
+gdzie
+
+- $n$ - liczba obserwacji
+
+Przykłady zdefiniowania $\Omega$
+
+- Liczba gałęzi
+- głębokość drzewa
+- wartość liści
+
+## Uczenie (Aditive Training)
+
+$$
+\hat{y}_i^{(0)} = 0 \\
+\hat{y}_i^{(1)} = f_1(x_i) = \hat{y}_i^{(0)} + f_1(x_i) \\
+\hat{y}_i^{(2)} = f_1(x_i) + f_2(x_i) = \hat{y}_i^{(1)} + f_2(x_i) \\
+\dots \\
+\hat{y}_i^{(K)} = \sum_{k = 0}^K f_k(x_i) = \hat{y}_i^{(K-1)} + f_K(x_i)
+$$
+gdzie $\hat{y}_\_$ - model w danym momencie treningu dla obserwacji $i$
+
+## Uczenie wybór następnego drzewa w algorytmie I
+
+Rozważmy moment $t$. W tym momencie nasz algorytm wygląda następująco
+
+$$
+\hat{y}_i^{(t)} =  \hat{f}_i^{(t-1)} + f_t(x_i)
+$$
+
+Szukamy jak najlepszego $f_t$.
+
+## Uczenie wybór następnego drzewa w algorytmie II
+
+Nasza funkcja celu w momencie $t$ jest postaci:
+
+$$
+  O^t(\Theta ) = \sum_{i = 1} ^ n l(y_i, \hat{y_i}^t) + \sum_{k = 0}^t \Omega(f_k) = \\
+  \sum_{i = 1}^n l(y_i, \hat{y}_i^{t-1} + f_t(x_i)) + \Omega(f_t) + c \rightarrow min
+$$
+
+gdzie
+
+- $c$ - stała wynikająca z regularyzacji we wcześniejszych korkach, nie mająca wpływu
+na obecnym etapie
+
+## Uczenie wybór następnego drzewa w algorytmie II
+
+Naszym celem jest zminimalizowanie $O$ po $f_t$.
+
+$$
+  O^t(\Theta ) = \sum_{i = 1} ^ n (y_i -  (\hat{y_i}^{t-1} + f_t(x_i)))^2 + \Omega(f_t) + c_1 = \\
+  \sum_{i = 1} ^ n [2(y_i -  \hat{y_i}^{t-1})f_t(x_i) + f_t(x_i)^2 + (y_i -  \hat{y_i}^{t-1}) ^2] + \Omega(f_t) + c_1 = 
+$$
+
+## Uczenie wybór następnego drzewa w algorytmie II
+
+Ponieważ $(y_i -  \hat{y_i}^{t-1}) ^2$ to stała policzona w poprzednim kroku możemy zapisać powyższe jako
+
+$$
+\sum_{i = 1} ^ n [2(y_i -  \hat{y_i}^{t-1})f_t(x_i) + f_t(x_i)^2] + \Omega(f_t) + c_2
+$$
+
+## Wzór Tailora
+
+$$ f(x + \Delta x) 	\approx	 f(x) + \Delta x f'(x) + \frac{\Delta x ^2}{2} f''(x)$$
+Oznaczmy 
+
+- $g_i = \partial_{\hat{y}^{t-1}}l(y, \hat{y}^{t-1})$
+- $h_i = \partial_{\hat{y}^{t-1}}^2 l(y, \hat{y}^{t-1})$
+
+## Wzór Tailora
+
+WóWczas dla błędu kwadratowego mamy
+
+$$
+  g_i = \partial_{\hat{y}^{t-1}}l(y, \hat{y}^{t-1}) = 
+  \partial_{\hat{y}^{t-1}} (y_i -  \hat{y_i}^{t-1})^2 =
+  2 (y_i -  \hat{y_i}^{t-1})
+$$
+
+oraz
+
+$$
+  h_i = \partial_{\hat{y}^{t-1}}^2 l(y, \hat{y}^{t-1}) = \partial_{\hat{y}^{t-1}} g_i =
+  \partial_{\hat{y}^{t-1}} 2 (y_i -  \hat{y_i}^{t-1}) = 2
+$$
+
+
+- $h_i = \partial_{\hat{y}^{t-1}}^2 l(y, \hat{y}^{t-1})$
+
+## Wykożystanie wzoru taylora
+
+Potraktujmy funkcję straty $$l$$ jako funkcję jednego (drugiego) argumentu $\hat{y}$
+
+Oraz trzymając się notacj ze wzrou Talora
+
+- $f(x)$ = $l(y_i, \hat{y}_i^{t-1})$
+- $\Delta x$ = $f_t(x_i)$
+
+Wówczas po podstawieniu otrzymujemy
+
+
+$$ 
+l(y_i, \hat{y}_i^{t-1} + f_t(x_i)) \approx l(y_i, \hat{y}_i^{t-1}) + f_t(x_i)g_i + \frac{1}{2}f_t(x_i)^2h_i
+$$
+
+## Wykożystanie wzoru taylora
+
+A zatem 
+
+$$
+O^t = \sum_{i = 1}^n [l(y_i, \hat{y}_i^{t-1}) + f_t(x_i)g_i + \frac{1}{2}f_t(x_i)^2h_i] + \Omega(f_t) + c_1
+$$
+
+## Wykożystanie wzoru taylora 
+
+oraz dla błędu kwadratowego
+
+$$
+  O^t = \sum_{i = 1}^n [l(y_i, \hat{y}_i^{t-1}) + 2 (y_i - \hat{y_i}^{t-1}) f_t(x_i) +
+  f_t(x_i)^2] + \Omega(f_t) + c_1
+$$
+
+## Nowa funkcja celu
+
+Po usunięciu stałych otrzymujemy
+
+$$
+O^t = \sum_{i = 1}^n [f_t(x_i)g_i + \frac{1}{2}f_t(x_i)^2h_i] + \Omega(f_t)
+$$
+
+oraz dla błędu kwadratowego
+
+$$
+O^t = \sum_{i = 1}^n [2 (y_i - \hat{y_i}^{t-1}) f_t(x_i) + f_t(x_i)^2] + \Omega(f_t)
+$$
+
+## Definicja drzewa
+
+Niech
+
+- $f_t: \mathbb{R}^n \rightarrow \mathbb{R}^T$ - t-te drzewo
+- $x \in \mathbb{R}^n$ - obserwacja (wektor n zmiennych)
+- $w \in \mathbb{R}^T$ - wektor wag (scoringow)
+- $q: \mathbb{R}^d \rightarrow \{1 \dots T\}$ - struktóa drzewa (to co widzimy jako ify)
+
+WóWczas drzewo definiujemy następująco
+
+$$
+f_t(x) = w_{q(x)}
+$$
+
+## Nauka drzewa dla jednej zmiennej
+
+Niech 
+
+- $x$ - wiek klienta w latach
+- $y$ - score
+
+```{r echo=FALSE}
+df <- tibble(
+  wiek = seq(from = 20, to = 80, by = 5),
+  score = c(.1, .1, .1, .15, .3, .5, .58, .6, .6, .58, .57, .6, .6)
+)
+
+p1 <- df %>% 
+  ggplot(aes(wiek, score)) + 
+  geom_point(colour = "#ff9060", size = 3)
+p1
+```
+
+## Nauka drzewa dla jednej zmiennej
+
+- $L$ - jak dobrze drzewo (funkcja) pasuje do punktów
+- $\Omega$ 
+    - liczba punktów podziału?
+    - wysokość każdego segmentu (wielkość wspułycznników)?
+
+## Nauka drzewa dla jednej zmiennej
+
+Zbyt dużo podziałów $\Omega(f)$ duża
+
+```{r echo=FALSE}
+df2 <- tibble(
+  wiek = df$wiek,
+  score = df$score
+)
+
+df2 %>% 
+  ggplot(aes(wiek, score)) +
+  geom_col(fill = "#ff9060", alpha = 0.5, width = 5, colour = "#ff9060") +
+  geom_point(colour = "#ff9060", size = 3, data = df)
+
+```
+
+
+## Nauka drzewa dla jednej zmiennej
+
+Zły punkt podziału $L(f)$ duże
+
+```{r echo=FALSE}
+df2 <- tibble(
+  wiek = c(40, 80),
+  score = c(0.4, 0.6)
+)
+
+df2 %>% 
+  ggplot(aes(wiek, score)) +
+  geom_col(fill = "#ff9060", alpha = 0.5, width = 40, colour = "#ff9060") +
+  geom_point(colour = "#ff9060", size = 3, data = df)
+
+```
+
+## Nauka drzewa dla jednej zmiennej
+
+Dobry podział
+
+```{r echo=FALSE}
+df2 <- tibble(
+  wiek = c(30, 80),
+  score = c(0.3, 0.6)
+)
+
+df2 %>% 
+  ggplot(aes(wiek, score, width = wiek - 5)) +
+  geom_col(fill = "#ff9060", alpha = 0.5, colour = "#ff9060") +
+  geom_point(colour = "#ff9060", size = 3, data = df)
+
+```
+
+## Źródła
+
+- http://xgboost.readthedocs.io
+- https://homes.cs.washington.edu/~tqchen/pdf/BoostedTree.pdf
+- https://archive.ics.uci.edu/ml/datasets/Mushroom
+
