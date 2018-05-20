@@ -1,0 +1,158 @@
+---
+title: "agaricus"
+date: "19 maja 2018"
+output: html_document
+---
+
+## opis danych
+
+1. cap-shape: 
+  - b: bell
+  - c: conical
+  - x: convex
+  - f: flat
+  - k: knobbed
+  - s: sunken
+2. cap-surface: 
+  - f: fibrous
+  - g: grooves
+  - s: scaly
+  - s: smooth
+3. cap-color
+  - n: brown
+  - b: buff
+  - c: cinnamon
+  - g: gray
+  - r: green
+  - p: pink
+  - u: purple
+  - e: red
+  - w: white
+  - y: yellow
+4. bruises?
+  - t: bruises
+  - f: no
+5. odor
+  - a: almond
+  - l: anise
+  - c: creosote
+  - y: fishy
+  - f: foul
+  - m: musty
+  - n: none
+  - p: pungent
+  - s: spicy
+6. gill-attachment
+  - a: attached
+  - d: descending
+  - f: free
+  - n: notched
+7. gill-spacing
+  - c: close
+  - w: crowded
+  - d: distant
+8. gill-size
+  - b: broad
+  - n: narrow
+9. gill-color
+  - k: black
+  - n: brown
+  - b: buff
+  - h: chocolate
+  - g: gray
+  - r: green
+  - o: orange
+  - p: pink
+  - u: purple
+  - e: red
+  - w: white
+  - y: yellow
+10. stalk-shape
+  - e: enlarging
+  - t: tapering
+11. stalk-root
+  - b: bulbous
+  - c: club
+  - u: cup
+  - e: equal
+  - z: rhizomorphs
+  - r: rooted
+  - ?: missing
+12. stalk-surface-above-ring
+  - f: fibrous
+  - y: scaly
+  - k: silky
+  - s: smooth
+13. stalk-surface-below-ring
+  - f: fibrous
+  - y: scaly
+  - k: silky
+  - s: smooth
+14. stalk-color-above-ring
+  - n: brown
+  - b: buff
+  - c: cinnamon
+  - g: gray
+  - r: green
+  - p: pink
+  - u: purple
+  - e: red
+  - w: white
+  - y: yellow
+15. stalk-color-below-ring
+  - n: brown
+  - b: buff
+  - c: cinnamon
+  - g: gray
+  - r: green
+  - p: pink
+  - u: purple
+  - e: red
+  - w: white
+  - y: yellow
+16. veil-type
+  - p: partial
+  - u: universal
+17. veil-color
+  - n: brown
+  - o: orange
+  - w: white
+  - y: yellow
+18. ring-number
+  - n: none
+  - o: one
+  - t: two
+19. ring-type
+  - c: cobwebby
+  - e: evanescent
+  - f: flaring
+  - l: large
+  - n: none
+  - p: pendant
+  - s: sheathing
+  - z: zone
+20. spore-print-color
+  - k: black
+  - n: brown
+  - b: buff
+  - h: chocolate
+  - r: green
+  - o: orange
+  - u: purple
+  - w: white
+  - y: yellow
+21. population
+  - a: abundant
+  - c: clustered
+  - n: numerous
+  - s: scattered
+  - v: several
+  - y: solitary
+22. habitat
+  - g: grasses
+  - l: leaves
+  - m: meadows
+  - p: paths
+  - u: urban
+  - w: waste
+  - d: woods
