@@ -257,7 +257,7 @@ $$
 \Omega(f_t) = \gamma T + \frac{1}{2} \lambda \sum_{j = 1}^T w_j^2
 $$
 Uwaga
-Każemy jednocześnie liczbę liści jaki i wielkość współczynników.
+Karzemy jednocześnie liczbę liści jaki i wielkość współczynników.
 
 
 ## Powrót do funkcji celu 
@@ -341,24 +341,103 @@ $$
 
 ## Powrót do funkcji celu 
 
-Załóżmy teraz, żę struktóra drzewa jest $q(x)$ jeststała, wówczas optymalne wagi
-z własności funkcji kwadratowej są postaci $w_j* = \frac{G_j}{H_j + \lambda}$. 
+Załóżmy teraz, żę struktura drzewa jest $q(x)$ jeststała, wówczas optymalne wagi
+z własności funkcji kwadratowej są postaci $w_j^* = \frac{G_j}{H_j + \lambda}$. 
 Oraz wartość funkcji celu 
 
 $$
-O^t = \sum_{i = j}^T \frac{G_j^2}{H_j + \lambda} + \gamma T
+O^t = -\sum_{i = j}^T \frac{G_j^2}{H_j + \lambda} + \gamma T
 $$
-## Powrót do funkcji celu 
+Uwaga 
+
+$\sum_{i = j}^T \frac{G_j^2}{H_j + \lambda}$ ta wartość mówi jak dobra jest struktóa naszego drzewa
 
 ## Przykład
 
-## Znjadowanie najleprzego drzewa
+Załóżmy, że mamy dżewo z trzema liśćmi. 
+
+liść                        |obserwcje w liściu|wartości parametrów
+----------------------------|------------------|-------------------
+balance > 1000, is_young = T|1, 6              |$I_1 = \{1, 6\}$, $G_1 = g_1 + g_6$, $H_1 = h_1 + h_6$
+balance > 1000, is_young = F|2, 3, 4           |$I_2 = \{2, 3, 4\}$, $G_2 = g_2 + g_3 + g_4$, $H_2 = h_2 + h_3 + h_4$
+balance <= 1000             |5                 |$I_3 = \{5\}$, $G_3 = g_5$, $H_3 = h_5$
+
+## Znjadowanie najleprzego drzewa podejście naiwne
+
+- Iteruj po wszyskich możliwych struktóach drzew $q$
+- Dla każdego $q$ policz funkcję celu $O^t$
+
+$$
+O^t = -\sum_{i = j}^T \frac{G_j^2}{H_j + \lambda} + \gamma T
+$$
+
+- Weź to tą struktórę któa ma najmniejszą wartość funkcji celu
+
+$w_j^* = \frac{G_j}{H_j + \lambda}$
+
+- podejście jest słabe, jest bardzo dużo możliwych struktur
+
+## Znjadowanie najlepszego drzewa w praktyce
+
+- zaczynamy od drzewa głębokości 0
+- dla każdego dżewa liczymy
+
+
+$$
+Gain = [\frac{G_L^2}{H_L + \lambda} + \frac{G_R^2}{H_R + \lambda} -
+\frac{(G_R + G_H)^2}{H_R + H_L + \lambda}] - \gamma
+$$
+- wystarczy posortować instancje i policzyć $Gain$ idąc od lewej do prawej
 
 ## Znjadowanie najlepszego drzewa w praktyce
 
 Uwaga 
 
-$\sum_{i = j}^T \frac{G_j^2}{H_j + \lambda}$ ta wartość mówi jak dobra jest struktóa naszego drzewa
+We wzorze na $Gain$ cztery komponenty to odpowiednio score lewego liścia, 
+score prawego liści, scor łączny, oraz koszt złożoności wynikający z dodatkowego liścia.
+Oczywiści podział warto rozważać tylko wtedy gdy $Gain$ jest dodatnie.
+
+## Przykład
+
+Rozważmy zmienną $balance$, posortowaną rosnąco
+
+balance   |104  |1002 |a|1432 |1545 |1789 |1800
+----------|-----|-----|-|-----|-----|-----|----
+obserwacja|5    |1    |-|6    |4    |2    |3
+g         |$g_5$|$g_1$|-|$g_6$|$g_4$|$g_2$|$g_3$
+h         |$h_5$|$h_1$|-|$h_6$|$h_4$|$h_2$|$h_3$
+
+Znajdziemy $Gain$ dla podziału $a$.
+
+## Przykład
+
+Mamy 
+
+- $G_L = g_5 + g_1$
+- $H_L = h_5 + h_1$
+- $G_R = g_6 + g_4 + g_2 + g_3$
+- $H_R = h_6 + h_4 + h_2 + h_3$
+
+Zatem
+
+$$
+Gain = [\frac{G_L^2}{H_L + \lambda} + \frac{G_R^2}{H_R + \lambda} -
+\frac{(G_R + G_H)^2}{H_R + H_L + \lambda}] - \gamma
+$$
+
+## Podsumowanie - algorytm znajdowania najlepszego splita
+
+```r
+  for wezęzeł in wszystkie węzły:
+    for zmienna in wszystkie zmienne:
+      posortuj obserwacje po wartościach aktualnej zmiennej
+      licz gain od lewej do prawej by znaleźć nailepszy podział
+      weź najlepszy podział z wszystkich cech
+```
+## Zmienne kategoryczne
+
+- one-hot encoding
+- przypisanie każdej kategorii cyfry (tracimy część inforamcji)
 
 ## Nauka drzewa dla jednej zmiennej
 
