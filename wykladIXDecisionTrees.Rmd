@@ -1,0 +1,185 @@
+---
+title: "DecisionTrees"
+author: "Mateusz Sobieraj"
+date: "31 maja 2018"
+output: 
+  ioslides_presentation:
+  css: dependencies/styles.css
+  logo: dependencies/grosz.png
+logo: dependencies/grosz.png
+smaller: yes
+encoding: UTF-8
+transition: slower
+widescreen: no
+---
+
+```{r setup, include=FALSE}
+library(dplyr)
+library(ggplot2)
+```
+
+## Wstęp
+
+Oznaczenia
+
+- $X$ - dowolna zmienna losowa
+- $P$ - miara probabilistyczna
+- $n$ - liczba obserwacji
+- $x_i$ - i-ta obserwacja
+- $p_i$ - prawdopodobieństwo $x_i$
+- $S$ - zbiór
+- $|S|$ liczność zbioru
+
+## Wstęp
+
+#### DEF Algorytm zachłanny
+
+Algorytm, który w celu wyznaczenia rozwiązania w każdym kroku podejmuje najleszą lokalnie decyzję.
+
+## Wstęp
+
+### DEF Inforamcja wzjaemna
+
+Informację wzajemną zdefiniujmy wzorem
+
+$$
+I(X) = \log_b\frac{1}{P(X)}
+$$
+
+## Wstęp
+
+Uwaga 
+
+Iformacja wzajemna jest to wartość informacyjna zajścia zdażenia
+
+## Entropia
+
+#### DEF Entropia
+
+Entorpię zdefiniujemy wzorem
+
+$$
+H(X) = \mathbb{E}(I(X)) = \mathbb{E}(\log_b\frac{1}{P(X)})
+$$
+
+## Entropia
+
+#### DEF Estymator entropii
+
+Estymator entropi zmiennej X zdefiniujemy wzroem 
+
+$$
+\hat{H}(X) = \sum_{i = 1}^n p_i \log_b\frac{1}{p_i}
+$$
+
+## Entropia
+
+####Uwaga 
+
+Łatwo zauważyć, że entropia to średnia ważona informacji wzajemnej poszczegulnych zdażeń,
+ważona prawdopodobieństwem.
+
+## Entropia
+
+####Uwaga 
+
+Gdy mamy zbiór danych $S$, który zawiera $k$ kategorii, wówczas
+
+- prawdopodobieństwo kategorii $j$ wynosi $p_j = \frac{liczba\ wystąpień\ kategorii\ j}{liczność\ zbioru}$
+- $\hat{H}(S) = \sum_{j = 1}^k p_j \log_b\frac{1}{p_j}$
+
+## Entropia
+
+```{r entropy}
+entropy <- function(x, b = 2) {
+  probs <- x %>% table() %>% prop.table()
+  self_information <- log(1/ probs, base = b)
+  sum(probs * self_information)
+}
+```
+
+## Entropia
+
+```{r}
+entropy(c(1, 0, 0, 1))
+entropy(c(0, 0, 0, 0))
+entropy(c(0, 1, 1, 1))
+
+```
+
+## Entropia
+
+Wykres entropii dla zbioru dwuch kategorii
+
+```{r echo=FALSE}
+tibble(p1 = seq(0, 1, by=0.02)) %>% 
+  mutate(p2 = 1- p1) %>% 
+  mutate(entropy = - p1 * log2(p1) - p2 * log2(p2)) %>% 
+  ggplot(aes(p1, entropy)) +
+  geom_point(colour = "#ff9060", size = 2)
+```
+
+
+## Zysk informacyjny (Information gain)
+
+Rozważmy
+
+$S$ - zbiór danych
+$P = \{S_1, \dots, S_k\}$ - podział $S$
+
+Wówczas zysk informacyjny $IG$ definiujemy wzorem
+
+$$
+IG(S, P) = H(S) - \sum_{i=1}^k \frac{|S_i|}{|S|} H(S_i)
+$$
+
+
+## Zysk informacyjny (Information gain)
+
+Uwaga 
+
+Łatwo zauważyć, że 
+
+- $\frac{|S_i|}{|S|}$ to prawdopodobieństwo należenie do zbioru $i$.
+- $H(S)$ jest entropią całego układu
+- $H(S_i)$ jest entropią wewnątrz zbioru. W naszym przypadku liścia. Ponieważ chcemy
+mieć jak najczystrze liście więc im niższa tym lepiej
+- $IG$ mieży redukcję w entropii, spowodowaną podziałem $P$
+- chcemy zatem maksymalizować $IG$
+
+Uwaga
+
+Jeżeli podział $P$ podzieli zbiór tylko na kategorie czyste wówczas dla
+$i = 1 \dots k$, $S_i = 0$ zatem redukcja entropi wynosi $IG(S, P) = H(S)$, a entropia
+nowego układu $0$.
+
+
+
+## Zysk informacyjny (Information gain)
+
+Uwaga 
+
+Information gain nazywana jest też entropią względną lub dywergencją Kullbacka-Leiblera
+
+## Zysk informacyjny (Information gain)
+
+```{r entropy}
+IG <- function(data, label) {
+  
+}
+
+```
+
+
+## Algorytm ID3 zarys
+
+1. Weź dane zawierające zmieną objaśnianą i zmienne objaśniające
+2. Wybież najlepszą zmienną
+3. Dokonaj podziału po wybranej zmiennej
+4. Rekurencyjnie stwóż następny podział
+5. ...
+
+## Warunek stopu
+
+1. Idealny podział (w każdym liściu są wartości jednej klasy)
+2. Nie pozostało więcej zmiennych do tworzenia podziału (ID3 używa każdej zmiennej tylko raz)
