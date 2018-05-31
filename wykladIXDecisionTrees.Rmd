@@ -66,7 +66,7 @@ $$
 
 #### DEF Estymator entropii
 
-Estymator entropi zmiennej X zdefiniujemy wzorem 
+Estymator entropi zmiennej $X$ zdefiniujemy wzorem 
 
 $$
 \hat{H}(X) = \sum_{i = 1}^n p_i \log_b\frac{1}{p_i}
@@ -76,7 +76,7 @@ $$
 
 ####UWAGA 
 
-Łatwo zauważyć, że entropia to średnia ważona informacji wzajemnej poszczególnych zdarzeń,
+Łatwo zauważyć, że entropia to średnia ważona informacji wzajemnej poszczególnych zdarzeń
 ważona prawdopodobieństwem.
 
 ## Entropia
@@ -147,14 +147,14 @@ $$
 - $H(S_i)$ jest entropią wewnątrz zbioru. W naszym przypadku liścia. Ponieważ chcemy
 mieć jak najczystsze liście więc im niższa tym lepiej
 - $IG(S,P)$ mierzy redukcję entropii układu, spowodowaną podziałem $P$
-- chcemy zatem maksymalizować $IG(S,P)$ po $P$
+- chcemy maksymalizować $IG(S,P)$ po $P$
 
 ## Zysk informacyjny (Information gain)
 
 #### UWAGA
 
 Jeżeli $P$ jest podziałem tylko na podzbiory czyste (posiadające tylko jedną kategorię) wówczas dla
-$i = 1 \dots k$, $S_i = 0$ zatem redukcja entropi wynosi $IG(S, P) = H(S)$, a entropia
+$i = 1 \dots k$, $S_i = 0$. Zatem redukcja entropi wynosi $IG(S, P) = H(S)$, a entropia
 nowego układu równa się $0$.
 
 
@@ -170,7 +170,7 @@ Zysk informacyjny nazywany jest też entropią względną lub dywergencją Kullb
 #### UWAGA 
 
 Zysk informacyjny jest wrażliwy na liczbę kategorii, Jeżeli rozważam zmienne z różnymi liczbami
-kategorii, lepiej stosować $gain ratio$.
+kategorii, lepiej stosować $gain \ ratio$.
 
 ## Zysk informacyjny (Information gain)
 
@@ -252,5 +252,5 @@ Stosuje się dwa podejścia
 
 - buduje drzewo do momentu, aż wartość predykcyjna na zbiorze walidacyjnym zaczyna spadać
 - buduje pełne drzewo i przycinam (prune) je do momentu, aż wartość predykcyjna na zbiorze
-walidacyjnym zaczyna spadać.
+walidacyjnym zaczyna spadać
 
