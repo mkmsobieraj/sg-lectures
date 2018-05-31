@@ -4,8 +4,8 @@ author: "Mateusz Sobieraj"
 date: "31 maja 2018"
 output: 
   ioslides_presentation:
-  css: dependencies/styles.css
-  logo: dependencies/grosz.png
+    css: dependencies/styles.css
+    logo: dependencies/grosz.png
 logo: dependencies/grosz.png
 smaller: yes
 encoding: UTF-8
@@ -34,11 +34,11 @@ Oznaczenia
 
 #### DEF Algorytm zachłanny
 
-Algorytm, który w celu wyznaczenia rozwiązania w każdym kroku podejmuje najleszą lokalnie decyzję.
+Algorytm który w celu wyznaczenia rozwiązania, w każdym kroku podejmuje najleszą lokalnie decyzję.
 
 ## Wstęp
 
-### DEF Inforamcja wzjaemna
+#### DEF Inforamcja wzjaemna
 
 Informację wzajemną zdefiniujmy wzorem
 
@@ -48,15 +48,15 @@ $$
 
 ## Wstęp
 
-Uwaga 
+####  UWAGA 
 
-Iformacja wzajemna jest to wartość informacyjna zajścia zdażenia
+Iformacja wzajemna jest to wartość informacyjna zajścia zdażenia.
 
 ## Entropia
 
 #### DEF Entropia
 
-Entorpię zdefiniujemy wzorem
+Entorpię zmiennej $X$ zdefiniujemy wzorem
 
 $$
 H(X) = \mathbb{E}(I(X)) = \mathbb{E}(\log_b\frac{1}{P(X)})
@@ -74,21 +74,23 @@ $$
 
 ## Entropia
 
-####Uwaga 
+####UWAGA 
 
 Łatwo zauważyć, że entropia to średnia ważona informacji wzajemnej poszczegulnych zdażeń,
 ważona prawdopodobieństwem.
 
 ## Entropia
 
-####Uwaga 
+####UWAGA 
 
 Gdy mamy zbiór danych $S$, który zawiera $k$ kategorii, wówczas
 
 - prawdopodobieństwo kategorii $j$ wynosi $p_j = \frac{liczba\ wystąpień\ kategorii\ j}{liczność\ zbioru}$
-- $\hat{H}(S) = \sum_{j = 1}^k p_j \log_b\frac{1}{p_j}$
+- Entropia w Zbiorze wynosi $\hat{H}(S) = \sum_{j = 1}^k p_j \log_b\frac{1}{p_j}$
 
 ## Entropia
+
+Implementacja entropii w $R$.
 
 ```{r entropy}
 entropy <- function(x, b = 2) {
@@ -109,12 +111,12 @@ entropy(c(0, 1, 1, 1))
 
 ## Entropia
 
-Wykres entropii dla zbioru dwuch kategorii
+Wykres entropii dla dwuch kategorii
 
 ```{r echo=FALSE}
-tibble(p1 = seq(0, 1, by=0.02)) %>% 
-  mutate(p2 = 1- p1) %>% 
-  mutate(entropy = - p1 * log2(p1) - p2 * log2(p2)) %>% 
+tibble(p1 = seq(0.02, 0.98, by = 0.02)) %>% 
+  mutate(p2 = 1 - p1) %>% 
+  mutate(entropy = -p1 * log2(p1) - p2 * log2(p2)) %>% 
   ggplot(aes(p1, entropy)) +
   geom_point(colour = "#ff9060", size = 2)
 ```
@@ -124,8 +126,8 @@ tibble(p1 = seq(0, 1, by=0.02)) %>%
 
 Rozważmy
 
-$S$ - zbiór danych
-$P = \{S_1, \dots, S_k\}$ - podział $S$
+- $S$ - zbiór danych
+- $P = \{S_1, \dots, S_k\}$ - podział $S$
 
 Wówczas zysk informacyjny $IG$ definiujemy wzorem
 
@@ -136,50 +138,119 @@ $$
 
 ## Zysk informacyjny (Information gain)
 
-Uwaga 
+#### UWAGA 
 
 Łatwo zauważyć, że 
 
-- $\frac{|S_i|}{|S|}$ to prawdopodobieństwo należenie do zbioru $i$.
+- $\frac{|S_i|}{|S|}$ to prawdopodobieństwo należenia do zbioru $i$.
 - $H(S)$ jest entropią całego układu
 - $H(S_i)$ jest entropią wewnątrz zbioru. W naszym przypadku liścia. Ponieważ chcemy
 mieć jak najczystrze liście więc im niższa tym lepiej
-- $IG$ mieży redukcję w entropii, spowodowaną podziałem $P$
-- chcemy zatem maksymalizować $IG$
+- $IG(S,P)$ mieży redukcję entropii układu, spowodowaną podziałem $P$
+- chcemy zatem maksymalizować $IG(S,P)$ po $P$
 
-Uwaga
+## Zysk informacyjny (Information gain)
 
-Jeżeli podział $P$ podzieli zbiór tylko na kategorie czyste wówczas dla
+#### UWAGA
+
+Jeżeli $P$ jest podziałem tylko na podzbiory czyste (posiadające tylko jedną kategorię) wówczas dla
 $i = 1 \dots k$, $S_i = 0$ zatem redukcja entropi wynosi $IG(S, P) = H(S)$, a entropia
-nowego układu $0$.
+nowego układu róWna się $0$.
 
 
 
 ## Zysk informacyjny (Information gain)
 
-Uwaga 
+#### UWAGA 
 
-Information gain nazywana jest też entropią względną lub dywergencją Kullbacka-Leiblera
+Zysk informacyjny nazywany jest też entropią względną lub dywergencją Kullbacka-Leiblera.
 
 ## Zysk informacyjny (Information gain)
 
-```{r entropy}
-IG <- function(data, label) {
-  
-}
+#### UWAGA 
 
-```
+Zysk informacyjny jest wrażliwy na liczbę kategorii, Jeżeli rozważam zmienne z różnymi liczbami
+kategorii, lepiej stosować $gain ratio$.
 
+## Zysk informacyjny (Information gain)
+
+#### DEF Split information
+
+Split information zdefiniujemy wzorem
+
+$$
+SI(S, P) = \sum_{i=1}^k \frac{|S_i|}{|S|}\log_b\frac{|S|}{|S_i|} 
+$$
+
+#### DEF Gain ratio
+
+Gain Ratio zdefiniujemy wzorem
+
+$$
+GR(S, P) = \frac{IG(S,P)}{SI(S, P)}
+$$
+
+## Algorytm ID3 oznaczenia
+
+Zaktualizujmy oznaczenia do problemu klasyfikacji
+
+- $\mathbb{X}$ - macież zmiennych objaśniających
+- $Y$ - zmienna objaśniana
+- $k$ - liczba kategorii zmiennej objaśnianej
+- $p_i$ - prawdopodobieństwo wystąpienia i-tej kategorii
+
+
+## Algorytm ID3 uproszczenia
+
+#### UWAGA
+
+Oryginalnie algorytm $ID3$, został stworzony przez Rossa Quinlana i w tej wersji,
+dopuszczał podział na dowolnie wiele kategorii. W naszej uproszczonej implementacji
+będziemy rozważać tylko dżewa binarne. Przyniesie nam to następujące kożyści
+
+- możemy posłygiwać się zyskiem informacyjnym $IG$
+- łotwo dostosować algorytm do zmiennych ciągłych
 
 ## Algorytm ID3 zarys
+
+Schemat algorytmu:
 
 1. Weź dane zawierające zmieną objaśnianą i zmienne objaśniające
 2. Wybież najlepszą zmienną
 3. Dokonaj podziału po wybranej zmiennej
-4. Rekurencyjnie stwóż następny podział
-5. ...
+4. Rekurencyjnie powtażaj powyższe, aż do warunku stopu
 
-## Warunek stopu
+
+## 2. Wybież najlepszą zmienną
+
+1. Dla wszystkich zmiennych objaśniających
+    - posortuj (dla zmiennych kategorialnych nie posiadających relacji porządku mogę sprawdzić
+    wszystkie kombinacje kategorii, lub rozkodować zmienną na zmienne binarne)
+    - idąc od lewej do prawej licz zysk informacyjny dla każdej zmiennej
+2. Wybierz zmienną o największym zysku informacyjnym
+
+
+## Algorytm ID3 Warunek stopu
 
 1. Idealny podział (w każdym liściu są wartości jednej klasy)
 2. Nie pozostało więcej zmiennych do tworzenia podziału (ID3 używa każdej zmiennej tylko raz)
+
+## Alogrytm ID3 Overfitting 
+
+#### UWAGA
+
+Ponieważ warunek stopu jest bardzo liberalny, zatem algorytm jest podatny na przetrenowanie.
+
+## Alogrytm ID3 Overfitting 
+
+#### UWAGA
+
+Popularnym sposobem radzenia sobie z przetenowaniem drzewa jest porównywanie jego 
+wartości predykcyjnej na zbioże walidacyjnym lub kroswalidacyjnie (log-loss, accuracy itp.).
+
+Stosuje się dwa podejścia
+
+- buduje drzewo do momentu, aż wartość predykcyjna na zbiorze walidacyjnym zaczyna spadać
+- buduje pełne dżewo i przycinam (prune) je do momentu, aż wartość predykcyjna na zbiorze
+walidacyjnym zaczyna spadać
+
