@@ -12,6 +12,6 @@ th {
  background: rgba(255, 118, 42, 1) !important;
 }
 
-.MathJax_Display, .MathJax {
+.MathJax_Display, .MathJax, h4 {
   color:#ff9060;
 }
