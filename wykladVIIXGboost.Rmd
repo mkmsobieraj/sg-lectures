@@ -41,7 +41,7 @@ library(ggplot2)
 
 <img src = "dependencies/tree1.png" width="75%" height="75%"/>
 
-## Drzewa daecyzyjne
+## Drzewa decyzyjne
 
 Zalety
 
@@ -56,7 +56,7 @@ Zalety
 
 ## Problem - uczenie drzewa
 
-Niech $x$ będzie wiekiem klienta w latach, a $y$ scoringiem. Jak powinno wyglądać optymalne drzewo?
+Niech $x$ będzie wiekiem klienta w latach a $y$ scoringiem. Jak powinno wyglądać optymalne drzewo?
 
 ```{r echo=FALSE}
 df <- tibble(
@@ -144,7 +144,7 @@ Wówczas funkcję $f: \mathbb{R}^n \rightarrow \mathbb{R}^T, \quad T <= n$ okre�
 $$
 f(x) = w_{q(x)}
 $$
-Nazywamy drzewem.
+nazywamy drzewem.
 
 ## Definicja drzewa
 
@@ -239,9 +239,9 @@ $$
 
 Szukamy jak najlepszego $f_t$.
 
-## Uczenie wybór następnego drzewa w algorytmie
+## Funkcja celu
 
-Nasza funkcja celu w momencie $t$ jest postaci:
+Funkcja celu ma postać
 
 $$
   O^t(\Theta ) = \sum_{i = 1} ^ n l(y_i, \hat{y_i}^t) + \sum_{k = 0}^t \Omega(f_k) = \\
@@ -253,22 +253,9 @@ gdzie
 - $c$ - stała wynikająca z regularyzacji we wcześniejszych korkach, nie mająca wpływu
 na obecnym etapie
 
-## Uczenie wybór następnego drzewa w algorytmie
+#### UWAGA
 
 Naszym celem jest zminimalizowanie $O$ po $f_t$.
-
-$$
-  O^t(\Theta ) = \sum_{i = 1} ^ n (y_i -  (\hat{y_i}^{t-1} + f_t(x_i)))^2 + \Omega(f_t) + c_1 = \\
-  \sum_{i = 1} ^ n [2(y_i -  \hat{y_i}^{t-1})f_t(x_i) + f_t(x_i)^2 + (y_i -  \hat{y_i}^{t-1}) ^2] + \Omega(f_t) + c_1 = 
-$$
-
-## Uczenie wybór następnego drzewa w algorytmie
-
-Ponieważ $(y_i -  \hat{y_i}^{t-1}) ^2$ to stała policzona w poprzednim kroku możemy zapisać powyższe jako
-
-$$
-\sum_{i = 1} ^ n [2(y_i -  \hat{y_i}^{t-1})f_t(x_i) + f_t(x_i)^2] + \Omega(f_t) + c_2
-$$
 
 ## Wzór Taylora
 
@@ -303,7 +290,7 @@ $$
 
 ## Wykorzystanie wzoru Taylora
 
-Potraktujmy funkcję straty $l$ jako funkcję jednego argumentu $\hat{y}^{t-1}$
+Potraktujmy funkcję straty $l$ jako funkcję argumentu $\hat{y}^{t-1}$
 
 Oraz trzymając się notacji ze wzoru Taylora
 
@@ -475,17 +462,21 @@ $$
 
 Podejście jest słabe, istnieje bardzo dużo możliwych struktur.
 
+
 ## Znajdowanie najlepszego drzewa w praktyce
 
-- zaczynamy od drzewa głębokości 0
-- dla każdego drzewa liczymy
+#### DEF Gain 
 
+Gain zdefiniujemy wzorem
 
 $$
 Gain = [\frac{G_L^2}{H_L + \lambda} + \frac{G_R^2}{H_R + \lambda} -
 \frac{(G_R + G_H)^2}{H_R + H_L + \lambda}] - \gamma
 $$
-- wystarczy posortować instancje i policzyć $Gain$ idąc od lewej do prawej
+
+#### Uwaga 
+
+$Gain$ mierzy o ile poprawi się funkcja celu $O$ po dokonaniu podziału.
 
 ## Znajdowanie najlepszego drzewa w praktyce
 
@@ -496,13 +487,27 @@ We wzorze na $Gain$ cztery komponenty to odpowiednio
 - score lewego liścia 
 - score prawego liścia
 - score łączny
-- koszt złożoności wynikający z dodatkowego liścia.
+- koszt złożoności wynikający z dodania liścia.
 
-Oczywiście podział warto rozważać tylko wtedy gdy $Gain$ jest dodatnie.
+
+## Znajdowanie najlepszego drzewa w praktyce
+
+- wykorzystujemy algorytm zachłanny
+- zaczynamy od drzewa głębokości 0
+- dla każdeg aktualnego liścia, sprawdź czy dodać podział (policz $Gain$)
+
+#### Uwaga
+
+Oczywiście do podziału dochodzi tylko wtedy gdy $Gain$ jest dodatnie.
+
+#### Uwaga
+
+By znaleźć dla zmiennej optymalny podział, wystarczy posortować instancje po zmiennej i
+policzyć $Gain$ idąc od lewej do prawej.
 
 ## Przykład
 
-Rozważmy zmienną $balance$, posortowaną rosnąco
+Rozważmy zmienną $balance$ posortowaną rosnąco
 
 balance   |104  |1002 |a|1432 |1545 |1789 |1800
 ----------|-----|-----|-|-----|-----|-----|----
@@ -541,11 +546,11 @@ $$
 
 #### UWAGA
 
-Algorytm działą tylko dla zmiennych ciągłych. Możliwe rozwiązania
+Algorytm działa tylko dla zmiennych ciągłych. Możliwe rozwiązania
 
 - one-hot encoding
 - przypisanie każdej kategorii cyfry (tracimy część informacji jeżeli w zmiennej
-kategorialnej nie da się określić relacji porządku)
+kategorycznej nie da się określić relacji porządku)
 
 ## Przygotowanie środowiska 
 
