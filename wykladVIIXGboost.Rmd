@@ -14,7 +14,7 @@ widescreen: no
 ---
 
 ```{r setup, include=FALSE}
-# knitr::opts_chunk$set(echo = FALSE)
+knitr::opts_chunk$set(message = FALSE, fig.heigh = 4, fig.width = 6)
 library(dplyr)
 library(ggplot2)
 library(GGally)
@@ -23,29 +23,13 @@ library(ggnet)
 library(ggplot2)
 ```
 
-## Przygotowanie środowiska 
-
-```{r}
-library(xgboost)
-data(agaricus.train, package = 'xgboost')
-data(agaricus.test, package = 'xgboost')
-train <- agaricus.train
-test <- agaricus.test
-```
-
-## opis danych
-
-
-```{r}
-```
-
 
 ## Oznaczenia 
 
 - $d$ - liczba zmiennych
-- $\mathbb{x}_i \in \mathbb{R}$ - i-ty wektor miennych objaśniających
+- $\mathbb{x}_i \in \mathbb{R}$ - i-ty wektor zmiennych objaśniających
 - $y_i$ - i-ta wartość zmiennej objeśnianej
-- $\hat{y_i}$ - i-ta predykcja
+- $\hat{y}_i$ - i-ta predykcja
 - $\Theta$ - zbiór parametrów modelu
 - $L(\Theta)$ - funkcja straty
 - $\Omega(\Theta)$ - regularyzacja
@@ -57,35 +41,159 @@ test <- agaricus.test
 
 ## Drzewa daecyzyjne
 
+Zalety
+
 - niezależne od skali zmiennych 
 - łatwo skalowalne
 - uczą się ogólnych zależności między cechami
 - łatwo implementowalne
 - jeżeli płytkie, wówaczas mają małą wariancję
+- niewrażliwe na obserwacje odstające 
+- uwzględniają nieliniowości i interakcje
+- szybkie
+
+## Problem - uczenie drzewa
+
+Niech $x$ będzie wiekiem klienta w latach, a $y$ scoringiem.
+
+```{r echo=FALSE}
+df <- tibble(
+  wiek = seq(from = 20, to = 80, by = 5),
+  score = c(.1, .1, .1, .15, .3, .5, .58, .6, .6, .58, .57, .6, .6)
+)
+
+p1 <- df %>% 
+  ggplot(aes(wiek, score)) + 
+  geom_point(colour = "#ff9060", size = 3)
+p1
+```
+
+## Problem - uczenie drzewa
+
+- $L$ - jak dobrze drzewo pasuje do punktów
+- $\Omega$ 
+    - liczba punktów podziału?
+    - wysokość każdego segmentu (wielkość wspułycznników)?
+
+## Problem - uczenie drzewa
+
+Zbyt dużo podziałów $\Omega(f)$ duża
+
+```{r echo=FALSE}
+df2 <- tibble(
+  wiek = df$wiek,
+  score = df$score
+)
+
+df2 %>% 
+  ggplot(aes(wiek, score)) +
+  geom_col(fill = "#ff9060", alpha = 0.5, width = 5, colour = "#ff9060") +
+  geom_point(colour = "#ff9060", size = 3, data = df)
+
+```
+
+## Problem - uczenie drzewa
+
+Zły punkt podziału $L(f)$ duże
+
+```{r echo=FALSE}
+df2 <- tibble(
+  wiek = c(40, 80),
+  score = c(0.4, 0.6)
+)
+
+df2 %>% 
+  ggplot(aes(wiek, score)) +
+  geom_col(fill = "#ff9060", alpha = 0.5, width = 40, colour = "#ff9060") +
+  geom_point(colour = "#ff9060", size = 3, data = df)
+
+```
+
+## Problem - uczenie drzewa
+
+Dobry podział
+
+```{r echo=FALSE}
+df2 <- tibble(
+  wiek = c(30, 80),
+  score = c(0.3, 0.6)
+)
+
+df2 %>% 
+  ggplot(aes(wiek, score, width = wiek - 5)) +
+  geom_col(fill = "#ff9060", alpha = 0.5, colour = "#ff9060") +
+  geom_point(colour = "#ff9060", size = 3, data = df)
+
+```
+
+## Definicja drzewa
+
+Niech
+
+- $f_t: \mathbb{R}^n \rightarrow \mathbb{R}^T$ - t-te drzewo
+- $x \in \mathbb{R}^n$ - obserwacja (wektor n zmiennych)
+- $w \in \mathbb{R}^T$ - wektor wag (scoringow)
+- $q: \mathbb{R}^d \rightarrow \{1 \dots T\}$ - struktóa drzewa (to co widzimy jako ify)
+
+Wówczas drzewo definiujemy następująco
+
+$$
+f_t(x) = w_{q(x)}
+$$
+
+## Definicja drzewa
+
+Przykład
+
+Spróbujmmy przedstawić poniższe drzewo w przedstawionej w poprzednim slaidzie notacji.
+
+<img src = "dependencies/tree_def_example.png" width="75%" height="75%"/>
+
+## Definicja drzewa
+
+- $w = [0.2, 0.15, 0.5]$
+- $T = [1, 2, 3]$
+- $q(x) = I_{balance <= 1000} * 3 +  \\  I_{balance > 1000} (I_{is\_young = 1} + I_{is\_young = 0} * 2)$
+
+## Definicja złożoności drzewa
+
+Złożoność dżewa zdefiniujmy następująco
+
+$$
+\Omega(f_t) = \gamma T + \frac{1}{2} \lambda \sum_{j = 1}^T w_j^2
+$$
+Uwaga
+Karzemy jednocześnie liczbę liści jaki i wielkość współczynników.
 
 ## Założenia XGboost
 
-Model definiujemy w następujący sposób
+Zdefiniujmy model wzorem
 
 $$
 \hat{y_i} = \sum_{k = 1}^K f_k(x_i), \quad f_k \in  \mathfrak{F}
 $$
 gdzie
 
- - $K$ - liczba drzew
- - $f_k$ - k-te drzewo
- - $\mathfrak{F}$ przestrzeń funkcyjna drzew decyzyjnych
+- $K$ - liczba drzew
+- $f_k$ - k-te drzewo
+- $\mathfrak{F}$ - przestrzeń funkcyjna drzew decyzyjnych
 
-Przestrzeń parametrów
+oraz oznaczmy
 
-- $\Theta = \{f_1, f_2, \dots, f_K\}$
+$\Theta = \{f_1, f_2, \dots, f_K\}$ - przestrzeń parametrów
 
 ## Funkcja celu
+
+Zdefiniujmy funkcję celu wzorem
 
 $$O(\Theta ) = \sum_{i = 1} ^ n l(y_i, \hat{y_i}) + \sum_{k = 1}^K \Omega(f_k)$$
 gdzie
 
 - $n$ - liczba obserwacji
+
+## Funkcja celu
+
+#### Uwaga
 
 Przykłady zdefiniowania $\Omega$
 
@@ -94,6 +202,8 @@ Przykłady zdefiniowania $\Omega$
 - wartość liści
 
 ## Uczenie (Aditive Training)
+
+Proces uczenia algorytmu, będzie przebiegał następująco
 
 $$
 \hat{y}_i^{(0)} = 0 \\
@@ -147,6 +257,10 @@ $$
 
 ## Wzór Tailora
 
+#### UWAGA
+
+Ze wzoru Taylora mamy
+
 $$ f(x + \Delta x) 	\approx	 f(x) + \Delta x f'(x) + \frac{\Delta x ^2}{2} f''(x)$$
 Oznaczmy 
 
@@ -155,7 +269,9 @@ Oznaczmy
 
 ## Wzór Tailora
 
-WóWczas dla błędu kwadratowego mamy
+#### WŁASNOŚĆ
+
+Dla błędu kwadratowego mamy
 
 $$
   g_i = \partial_{\hat{y}^{t-1}}l(y, \hat{y}^{t-1}) = 
@@ -170,12 +286,9 @@ $$
   \partial_{\hat{y}^{t-1}} 2 (y_i -  \hat{y_i}^{t-1}) = 2
 $$
 
+## Wykożystanie wzoru Taylora
 
-- $h_i = \partial_{\hat{y}^{t-1}}^2 l(y, \hat{y}^{t-1})$
-
-## Wykożystanie wzoru taylora
-
-Potraktujmy funkcję straty $l$ jako funkcję jednego (drugiego) argumentu $\hat{y}$
+Potraktujmy funkcję straty $l$ jako funkcję jednego argumentu $\hat{y}^{t-1}$
 
 Oraz trzymając się notacj ze wzrou Talora
 
@@ -189,15 +302,13 @@ $$
 l(y_i, \hat{y}_i^{t-1} + f_t(x_i)) \approx l(y_i, \hat{y}_i^{t-1}) + f_t(x_i)g_i + \frac{1}{2}f_t(x_i)^2h_i
 $$
 
-## Wykożystanie wzoru taylora
+## Wykożystanie wzoru Taylora
 
 A zatem 
 
 $$
 O^t = \sum_{i = 1}^n [l(y_i, \hat{y}_i^{t-1}) + f_t(x_i)g_i + \frac{1}{2}f_t(x_i)^2h_i] + \Omega(f_t) + c_1
 $$
-
-## Wykożystanie wzoru Taylora 
 
 oraz dla błędu kwadratowego
 
@@ -219,45 +330,6 @@ oraz dla błędu kwadratowego
 $$
 O^t \approx \sum_{i = 1}^n [2 (y_i - \hat{y_i}^{t-1}) f_t(x_i) + f_t(x_i)^2] + \Omega(f_t)
 $$
-
-## Definicja drzewa
-
-Niech
-
-- $f_t: \mathbb{R}^n \rightarrow \mathbb{R}^T$ - t-te drzewo
-- $x \in \mathbb{R}^n$ - obserwacja (wektor n zmiennych)
-- $w \in \mathbb{R}^T$ - wektor wag (scoringow)
-- $q: \mathbb{R}^d \rightarrow \{1 \dots T\}$ - struktóa drzewa (to co widzimy jako ify)
-
-Wówczas drzewo definiujemy następująco
-
-$$
-f_t(x) = w_{q(x)}
-$$
-
-## Definicja drzewa
-
-Przykład
-
-Spróbujmmy przedstawić poniższe drzewo w przedstawionej w poprzednim slaidzie notacji.
-
-<img src = "dependencies/tree_def_example.png" width="75%" height="75%"/>
-
-## Definicja drzewa
-
-- $w = [0.2, 0.15, 0.5]$
-- $T = [1, 2, 3]$
-- $q(x) = I_{balance <= 1000} * 3 +  \\  I_{balance > 1000} (I_{is\_young = 1} + I_{is\_young = 0} * 2)$
-
-## Definicja złożoności drzewa
-
-Złożoność dżewa zdefiniujmy następująco
-
-$$
-\Omega(f_t) = \gamma T + \frac{1}{2} \lambda \sum_{j = 1}^T w_j^2
-$$
-Uwaga
-Karzemy jednocześnie liczbę liści jaki i wielkość współczynników.
 
 
 ## Powrót do funkcji celu 
@@ -439,82 +511,14 @@ $$
 - one-hot encoding
 - przypisanie każdej kategorii cyfry (tracimy część inforamcji)
 
-## Nauka drzewa dla jednej zmiennej
+## Przygotowanie środowiska 
 
-Niech 
-
-- $x$ - wiek klienta w latach
-- $y$ - score
-
-```{r echo=FALSE}
-df <- tibble(
-  wiek = seq(from = 20, to = 80, by = 5),
-  score = c(.1, .1, .1, .15, .3, .5, .58, .6, .6, .58, .57, .6, .6)
-)
-
-p1 <- df %>% 
-  ggplot(aes(wiek, score)) + 
-  geom_point(colour = "#ff9060", size = 3)
-p1
-```
-
-## Nauka drzewa dla jednej zmiennej
-
-- $L$ - jak dobrze drzewo (funkcja) pasuje do punktów
-- $\Omega$ 
-    - liczba punktów podziału?
-    - wysokość każdego segmentu (wielkość wspułycznników)?
-
-## Nauka drzewa dla jednej zmiennej
-
-Zbyt dużo podziałów $\Omega(f)$ duża
-
-```{r echo=FALSE}
-df2 <- tibble(
-  wiek = df$wiek,
-  score = df$score
-)
-
-df2 %>% 
-  ggplot(aes(wiek, score)) +
-  geom_col(fill = "#ff9060", alpha = 0.5, width = 5, colour = "#ff9060") +
-  geom_point(colour = "#ff9060", size = 3, data = df)
-
-```
-
-
-## Nauka drzewa dla jednej zmiennej
-
-Zły punkt podziału $L(f)$ duże
-
-```{r echo=FALSE}
-df2 <- tibble(
-  wiek = c(40, 80),
-  score = c(0.4, 0.6)
-)
-
-df2 %>% 
-  ggplot(aes(wiek, score)) +
-  geom_col(fill = "#ff9060", alpha = 0.5, width = 40, colour = "#ff9060") +
-  geom_point(colour = "#ff9060", size = 3, data = df)
-
-```
-
-## Nauka drzewa dla jednej zmiennej
-
-Dobry podział
-
-```{r echo=FALSE}
-df2 <- tibble(
-  wiek = c(30, 80),
-  score = c(0.3, 0.6)
-)
-
-df2 %>% 
-  ggplot(aes(wiek, score, width = wiek - 5)) +
-  geom_col(fill = "#ff9060", alpha = 0.5, colour = "#ff9060") +
-  geom_point(colour = "#ff9060", size = 3, data = df)
-
+```{r}
+library(xgboost)
+data(agaricus.train, package = 'xgboost')
+data(agaricus.test, package = 'xgboost')
+train <- agaricus.train
+test <- agaricus.test
 ```
 
 ## Źródła
