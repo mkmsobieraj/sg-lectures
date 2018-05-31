@@ -28,16 +28,16 @@ library(ggplot2)
 
 - $d$ - liczba zmiennych
 - $\mathbb{x}_i \in \mathbb{R}$ - i-ty wektor zmiennych objaśniających
-- $y_i$ - i-ta wartość zmiennej objeśnianej
+- $y_i$ - i-ta wartość zmiennej objaśnianej
 - $\hat{y}_i$ - i-ta predykcja
 - $\Theta$ - zbiór parametrów modelu
 - $L(\Theta)$ - funkcja straty
 - $\Omega(\Theta)$ - regularyzacja
-- $O(\Theta) = L(\Theta) + \Omega(\Theta)$  - funckja celu
+- $O(\Theta) = L(\Theta) + \Omega(\Theta)$  - funkcja celu
 - $n$ - liczba zmiennych
 - $T$ - liczba liści
 
-## Drzewa daecyzyjne
+## Drzewa decyzyjne
 
 <img src = "dependencies/tree1.png" width="75%" height="75%"/>
 
@@ -49,7 +49,7 @@ Zalety
 - łatwo skalowalne
 - uczą się ogólnych zależności między cechami
 - łatwo implementowalne
-- jeżeli płytkie, wówaczas mają małą wariancję
+- jeżeli płytkie, wówczas mają małą wariancję
 - niewrażliwe na obserwacje odstające 
 - uwzględniają nieliniowości i interakcje
 - szybkie
@@ -75,7 +75,7 @@ p1
 - $L$ (funkcja straty) - jak dobrze drzewo pasuje do punktów
 - $\Omega$ (regularyzacja) 
     - liczba punktów podziału?
-    - wysokość każdego segmentu (wielkość wspułycznników)?
+    - wysokość każdego segmentu (wielkość współczynników)?
 
 ## Problem - uczenie drzewa
 
@@ -150,7 +150,7 @@ Nazywamy drzewem.
 
 #### PRZYKŁAD
 
-Spróbujmmy przedstawić poniższe drzewo w notacji z powyższej definicji.
+Spróbujmy przedstawić poniższe drzewo w notacji z powyższej definicji.
 
 <img src = "dependencies/tree_def_example.png" width="75%" height="75%"/>
 
@@ -164,7 +164,7 @@ Spróbujmmy przedstawić poniższe drzewo w notacji z powyższej definicji.
 
 #### DEF Złożoność drzewa
 
-Złożoność dżewa zdefiniujmy następująco
+Złożoność drzewa zdefiniujmy następująco
 
 $$
 \Omega(f) = \gamma T + \frac{1}{2} \lambda \sum_{j = 1}^T w_j^2
@@ -214,7 +214,7 @@ Przykłady zdefiniowania regularyzacji $\Omega$
 
 - Liczba gałęzi
 - głębokość drzewa
-- waagi liści
+- wagi liści
 
 ## Uczenie (Aditive Training)
 
@@ -270,7 +270,7 @@ $$
 \sum_{i = 1} ^ n [2(y_i -  \hat{y_i}^{t-1})f_t(x_i) + f_t(x_i)^2] + \Omega(f_t) + c_2
 $$
 
-## Wzór Tailora
+## Wzór Taylora
 
 #### UWAGA
 
@@ -282,7 +282,7 @@ Oznaczmy
 - $g_i = \partial_{\hat{y}^{t-1}}l(y, \hat{y}^{t-1})$
 - $h_i = \partial_{\hat{y}^{t-1}}^2 l(y, \hat{y}^{t-1})$
 
-## Wzór Tailora
+## Wzór Taylora
 
 #### WŁASNOŚĆ
 
@@ -301,11 +301,11 @@ $$
   \partial_{\hat{y}^{t-1}} 2 (y_i -  \hat{y_i}^{t-1}) = 2
 $$
 
-## Wykożystanie wzoru Taylora
+## Wykorzystanie wzoru Taylora
 
 Potraktujmy funkcję straty $l$ jako funkcję jednego argumentu $\hat{y}^{t-1}$
 
-Oraz trzymając się notacj ze wzrou Talora
+Oraz trzymając się notacji ze wzoru Taylora
 
 - $f(x)$ = $l(y_i, \hat{y}_i^{t-1})$
 - $\Delta x$ = $f_t(x_i)$
@@ -317,7 +317,7 @@ $$
 l(y_i, \hat{y}_i^{t-1} + f_t(x_i)) \approx l(y_i, \hat{y}_i^{t-1}) + f_t(x_i)g_i + \frac{1}{2}f_t(x_i)^2h_i
 $$
 
-## Wykożystanie wzoru Taylora
+## Wykorzystanie wzoru Taylora
 
 A zatem 
 
@@ -357,7 +357,7 @@ $$I_j = \{i|q(x_i) = j\}$$
 
 #### UWAGA
 
-Ponieważ, każda obserwacja jest jednoznacznie przypożądkowana do liścia, zachodzi następująca róWność
+Ponieważ, każda obserwacja jest jednoznacznie przyporządkowana do liścia, zachodzi następująca równość
 
 $$\sum_{i = 1}^n x_i = \sum_{i = j}^T \sum_{i \in I_j} x_i$$
 
@@ -370,7 +370,7 @@ O^t \approx \sum_{i = 1}^n [f_t(x_i)g_i + \frac{1}{2}f_t(x_i)^2h_i] + \Omega(f_t
 \sum_{i = 1}^n [f_t(x_i)g_i + \frac{1}{2}f_t(x_i)^2h_i] + \gamma T + \frac{1}{2} \lambda \sum_{j = 1}^T w_j^2 =
 $$
 
-Następnie z definicj drzewa $f_t(x) = w_{q_t(x)}$
+Następnie z definicji drzewa $f_t(x) = w_{q_t(x)}$
 
 $$
 \sum_{i = 1}^n [w_{q_t(x_i)}g_i + \frac{1}{2}w_{q_t(x_i)}^2h_i] + \gamma T + \frac{1}{2} \lambda \sum_{j = 1}^T w_j^2
@@ -437,7 +437,7 @@ $$
 
 ## Funkcja celu
 
-Załóżmy teraz, żę struktura drzewa $q(x)$ jest stała, wówczas optymalne wagi
+Załóżmy teraz, że struktura drzewa $q(x)$ jest stała, wówczas optymalne wagi
 z własności funkcji kwadratowej są postaci $w_j^* = \frac{G_j}{H_j + \lambda}$. 
 Oraz wartość funkcji celu 
 
@@ -447,38 +447,38 @@ $$
 
 #### UWAGA 
 
-$\sum_{i = j}^T \frac{G_j^2}{H_j + \lambda}$ ta wartość mówi jak dobra jest struktóa naszego drzewa
+$\sum_{i = j}^T \frac{G_j^2}{H_j + \lambda}$ ta wartość mówi jak dobra jest struktura naszego drzewa
 
 ## Przykład
 
 Załóżmy, że mamy drzewo z trzema liśćmi. 
 
-liść                        |obserwcje w liściu|wartości parametrów
-----------------------------|------------------|-------------------
-balance > 1000, is_young = T|1, 6              |$I_1 = \{1, 6\}$, $G_1 = g_1 + g_6$, $H_1 = h_1 + h_6$
-balance > 1000, is_young = F|2, 3, 4           |$I_2 = \{2, 3, 4\}$, $G_2 = g_2 + g_3 + g_4$, $H_2 = h_2 + h_3 + h_4$
-balance <= 1000             |5                 |$I_3 = \{5\}$, $G_3 = g_5$, $H_3 = h_5$
+liść                        |obserwacje w liściu|wartości parametrów
+----------------------------|-------------------|-------------------
+balance > 1000, is_young = T|1, 6               |$I_1 = \{1, 6\}$, $G_1 = g_1 + g_6$, $H_1 = h_1 + h_6$
+balance > 1000, is_young = F|2, 3, 4            |$I_2 = \{2, 3, 4\}$, $G_2 = g_2 + g_3 + g_4$, $H_2 = h_2 + h_3 + h_4$
+balance <= 1000             |5                  |$I_3 = \{5\}$, $G_3 = g_5$, $H_3 = h_5$
 
-## Znjadowanie najleprzego drzewa podejście naiwne
+## Znajdowanie najlepszego drzewa podejście naiwne
 
-- Iteruj po wszyskich możliwych struktóach drzew $q$
+- Iteruj po wszystkich możliwych strukturach drzew $q$
 - Dla każdego $q$ policz funkcję celu $O^t$
 
 $$
 O^t = -\sum_{i = j}^T \frac{G_j^2}{H_j + \lambda} + \gamma T
 $$
 
-- Weź tą struktórę która ma najmniejszą wartość funkcji celu
+- Weź tą strukturę która ma najmniejszą wartość funkcji celu
 
 
 #### UWAGA
 
 Podejście jest słabe, istnieje bardzo dużo możliwych struktur.
 
-## Znjadowanie najlepszego drzewa w praktyce
+## Znajdowanie najlepszego drzewa w praktyce
 
 - zaczynamy od drzewa głębokości 0
-- dla każdego dżewa liczymy
+- dla każdego drzewa liczymy
 
 
 $$
@@ -487,7 +487,7 @@ Gain = [\frac{G_L^2}{H_L + \lambda} + \frac{G_R^2}{H_R + \lambda} -
 $$
 - wystarczy posortować instancje i policzyć $Gain$ idąc od lewej do prawej
 
-## Znjadowanie najlepszego drzewa w praktyce
+## Znajdowanie najlepszego drzewa w praktyce
 
 #### UWAGA 
 
@@ -528,13 +528,13 @@ Gain = [\frac{G_L^2}{H_L + \lambda} + \frac{G_R^2}{H_R + \lambda} -
 \frac{(G_R + G_H)^2}{H_R + H_L + \lambda}] - \gamma
 $$
 
-## Podsumowanie - algorytm znajdowania najlepszej strukury
+## Podsumowanie - algorytm znajdowania najlepszej struktury
 
 ```r
-  for wezęzeł in wszystkie węzły:
+  for węzeł in wszystkie węzły:
     for zmienna in wszystkie zmienne:
       posortuj obserwacje po wartościach aktualnej zmiennej
-      licz gain od lewej do prawej by znaleźć nailepszy podział
+      licz gain od lewej do prawej by znaleźć najlepszy podział
       weź najlepszy podział z wszystkich cech
 ```
 ## Zmienne kategoryczne
@@ -544,8 +544,8 @@ $$
 Algorytm działą tylko dla zmiennych ciągłych. Możliwe rozwiązania
 
 - one-hot encoding
-- przypisanie każdej kategorii cyfry (tracimy część inforamcji jeżeli w zmiennej
-kategorialnej nie da się określić relacji pożądku)
+- przypisanie każdej kategorii cyfry (tracimy część informacji jeżeli w zmiennej
+kategorialnej nie da się określić relacji porządku)
 
 ## Przygotowanie środowiska 
 
