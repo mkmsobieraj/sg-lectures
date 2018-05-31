@@ -34,11 +34,11 @@ Oznaczenia
 
 #### DEF Algorytm zachłanny
 
-Algorytm który w celu wyznaczenia rozwiązania, w każdym kroku podejmuje najleszą lokalnie decyzję.
+Algorytm który w celu wyznaczenia rozwiązania, w każdym kroku podejmuje najlepszą lokalnie decyzję.
 
 ## Wstęp
 
-#### DEF Inforamcja wzjaemna
+#### DEF Informacja wzajemna
 
 Informację wzajemną zdefiniujmy wzorem
 
@@ -50,13 +50,13 @@ $$
 
 ####  UWAGA 
 
-Iformacja wzajemna jest to wartość informacyjna zajścia zdażenia.
+Informacja wzajemna jest to wartość informacyjna zajścia zdarzenia.
 
 ## Entropia
 
 #### DEF Entropia
 
-Entorpię zmiennej $X$ zdefiniujemy wzorem
+Entropię zmiennej $X$ zdefiniujemy wzorem
 
 $$
 H(X) = \mathbb{E}(I(X)) = \mathbb{E}(\log_b\frac{1}{P(X)})
@@ -66,7 +66,7 @@ $$
 
 #### DEF Estymator entropii
 
-Estymator entropi zmiennej X zdefiniujemy wzroem 
+Estymator entropi zmiennej X zdefiniujemy wzorem 
 
 $$
 \hat{H}(X) = \sum_{i = 1}^n p_i \log_b\frac{1}{p_i}
@@ -76,7 +76,7 @@ $$
 
 ####UWAGA 
 
-Łatwo zauważyć, że entropia to średnia ważona informacji wzajemnej poszczegulnych zdażeń,
+Łatwo zauważyć, że entropia to średnia ważona informacji wzajemnej poszczególnych zdarzeń,
 ważona prawdopodobieństwem.
 
 ## Entropia
@@ -111,7 +111,7 @@ entropy(c(0, 1, 1, 1))
 
 ## Entropia
 
-Wykres entropii dla dwuch kategorii
+Wykres entropii dla dwóch kategorii
 
 ```{r echo=FALSE}
 tibble(p1 = seq(0.02, 0.98, by = 0.02)) %>% 
@@ -145,8 +145,8 @@ $$
 - $\frac{|S_i|}{|S|}$ to prawdopodobieństwo należenia do zbioru $i$.
 - $H(S)$ jest entropią całego układu
 - $H(S_i)$ jest entropią wewnątrz zbioru. W naszym przypadku liścia. Ponieważ chcemy
-mieć jak najczystrze liście więc im niższa tym lepiej
-- $IG(S,P)$ mieży redukcję entropii układu, spowodowaną podziałem $P$
+mieć jak najczystsze liście więc im niższa tym lepiej
+- $IG(S,P)$ mierzy redukcję entropii układu, spowodowaną podziałem $P$
 - chcemy zatem maksymalizować $IG(S,P)$ po $P$
 
 ## Zysk informacyjny (Information gain)
@@ -155,7 +155,7 @@ mieć jak najczystrze liście więc im niższa tym lepiej
 
 Jeżeli $P$ jest podziałem tylko na podzbiory czyste (posiadające tylko jedną kategorię) wówczas dla
 $i = 1 \dots k$, $S_i = 0$ zatem redukcja entropi wynosi $IG(S, P) = H(S)$, a entropia
-nowego układu róWna się $0$.
+nowego układu równa się $0$.
 
 
 
@@ -206,22 +206,22 @@ Zaktualizujmy oznaczenia do problemu klasyfikacji
 
 Oryginalnie algorytm $ID3$, został stworzony przez Rossa Quinlana i w tej wersji,
 dopuszczał podział na dowolnie wiele kategorii. W naszej uproszczonej implementacji
-będziemy rozważać tylko dżewa binarne. Przyniesie nam to następujące kożyści
+będziemy rozważać tylko drzewa binarne. Przyniesie nam to następujące korzyści
 
-- możemy posłygiwać się zyskiem informacyjnym $IG$
-- łotwo dostosować algorytm do zmiennych ciągłych
+- możemy posługiwać się zyskiem informacyjnym $IG$
+- łatwo dostosować algorytm do zmiennych ciągłych
 
 ## Algorytm ID3 zarys
 
 Schemat algorytmu:
 
-1. Weź dane zawierające zmieną objaśnianą i zmienne objaśniające
-2. Wybież najlepszą zmienną
+1. Weź dane zawierające zmienną objaśnianą i zmienne objaśniające
+2. Wybierz najlepszą zmienną
 3. Dokonaj podziału po wybranej zmiennej
-4. Rekurencyjnie powtażaj powyższe, aż do warunku stopu
+4. Rekurencyjnie powtarzaj powyższe, aż do warunku stopu
 
 
-## 2. Wybież najlepszą zmienną
+## 2. Wybierz najlepszą zmienną
 
 1. Dla wszystkich zmiennych objaśniających
     - posortuj (dla zmiennych kategorialnych nie posiadających relacji porządku mogę sprawdzić
@@ -245,12 +245,12 @@ Ponieważ warunek stopu jest bardzo liberalny, zatem algorytm jest podatny na pr
 
 #### UWAGA
 
-Popularnym sposobem radzenia sobie z przetenowaniem drzewa jest porównywanie jego 
-wartości predykcyjnej na zbioże walidacyjnym lub kroswalidacyjnie (log-loss, accuracy itp.).
+Popularnym sposobem radzenia sobie z przetrenowaniem drzewa jest porównywanie jego 
+wartości predykcyjnej na zbiorze walidacyjnym lub kroswalidacyjnie (log-loss, accuracy itp.).
 
 Stosuje się dwa podejścia
 
 - buduje drzewo do momentu, aż wartość predykcyjna na zbiorze walidacyjnym zaczyna spadać
-- buduje pełne dżewo i przycinam (prune) je do momentu, aż wartość predykcyjna na zbiorze
-walidacyjnym zaczyna spadać
+- buduje pełne drzewo i przycinam (prune) je do momentu, aż wartość predykcyjna na zbiorze
+walidacyjnym zaczyna spadać.
 
