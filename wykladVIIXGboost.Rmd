@@ -34,6 +34,8 @@ library(ggplot2)
 - $L(\Theta)$ - funkcja straty
 - $\Omega(\Theta)$ - regularyzacja
 - $O(\Theta) = L(\Theta) + \Omega(\Theta)$  - funckja celu
+- $n$ - liczba zmiennych
+- $T$ - liczba liści
 
 ## Drzewa daecyzyjne
 
@@ -54,7 +56,7 @@ Zalety
 
 ## Problem - uczenie drzewa
 
-Niech $x$ będzie wiekiem klienta w latach, a $y$ scoringiem.
+Niech $x$ będzie wiekiem klienta w latach, a $y$ scoringiem. Jak powinno wyglądać optymalne drzewo?
 
 ```{r echo=FALSE}
 df <- tibble(
@@ -70,8 +72,8 @@ p1
 
 ## Problem - uczenie drzewa
 
-- $L$ - jak dobrze drzewo pasuje do punktów
-- $\Omega$ 
+- $L$ (funkcja straty) - jak dobrze drzewo pasuje do punktów
+- $\Omega$ (regularyzacja) 
     - liczba punktów podziału?
     - wysokość każdego segmentu (wielkość wspułycznników)?
 
@@ -128,24 +130,27 @@ df2 %>%
 
 ## Definicja drzewa
 
+
+#### DEF drzewo
+
 Niech
 
-- $f_t: \mathbb{R}^n \rightarrow \mathbb{R}^T$ - t-te drzewo
 - $x \in \mathbb{R}^n$ - obserwacja (wektor n zmiennych)
 - $w \in \mathbb{R}^T$ - wektor wag (scoringow)
 - $q: \mathbb{R}^d \rightarrow \{1 \dots T\}$ - struktóa drzewa (to co widzimy jako ify)
 
-Wówczas drzewo definiujemy następująco
+Wówczas funkcję $f: \mathbb{R}^n \rightarrow \mathbb{R}^T, \quad T <= n$ określoną wzorem
 
 $$
-f_t(x) = w_{q(x)}
+f(x) = w_{q(x)}
 $$
+Nazywamy drzewem.
 
 ## Definicja drzewa
 
-Przykład
+#### PRZYKŁAD
 
-Spróbujmmy przedstawić poniższe drzewo w przedstawionej w poprzednim slaidzie notacji.
+Spróbujmmy przedstawić poniższe drzewo w notacji z powyższej definicji.
 
 <img src = "dependencies/tree_def_example.png" width="75%" height="75%"/>
 
@@ -157,15 +162,21 @@ Spróbujmmy przedstawić poniższe drzewo w przedstawionej w poprzednim slaidzie
 
 ## Definicja złożoności drzewa
 
+#### DEF Złożoność drzewa
+
 Złożoność dżewa zdefiniujmy następująco
 
 $$
-\Omega(f_t) = \gamma T + \frac{1}{2} \lambda \sum_{j = 1}^T w_j^2
+\Omega(f) = \gamma T + \frac{1}{2} \lambda \sum_{j = 1}^T w_j^2
 $$
-Uwaga
+
+#### UWAGA
+
 Karzemy jednocześnie liczbę liści jaki i wielkość współczynników.
 
 ## Założenia XGboost
+
+#### DEF Model XGboost
 
 Zdefiniujmy model wzorem
 
@@ -184,22 +195,26 @@ $\Theta = \{f_1, f_2, \dots, f_K\}$ - przestrzeń parametrów
 
 ## Funkcja celu
 
+#### DEF Funkcja celu
+
 Zdefiniujmy funkcję celu wzorem
 
 $$O(\Theta ) = \sum_{i = 1} ^ n l(y_i, \hat{y_i}) + \sum_{k = 1}^K \Omega(f_k)$$
 gdzie
 
 - $n$ - liczba obserwacji
+- $K$ - liczba drzew
+- $f_k$ - k-te drzewo
 
 ## Funkcja celu
 
-#### Uwaga
+#### UWAGA
 
-Przykłady zdefiniowania $\Omega$
+Przykłady zdefiniowania regularyzacji $\Omega$
 
 - Liczba gałęzi
 - głębokość drzewa
-- wartość liści
+- waagi liści
 
 ## Uczenie (Aditive Training)
 
@@ -214,7 +229,7 @@ $$
 $$
 gdzie $\hat{y}_i^{(\_)}$ - model w danym momencie treningu dla obserwacji $i$.
 
-## Uczenie wybór następnego drzewa w algorytmie I
+## Uczenie wybór następnego drzewa w algorytmie
 
 Rozważmy moment $t$. W tym momencie nasz algorytm wygląda następująco
 
@@ -224,7 +239,7 @@ $$
 
 Szukamy jak najlepszego $f_t$.
 
-## Uczenie wybór następnego drzewa w algorytmie II
+## Uczenie wybór następnego drzewa w algorytmie
 
 Nasza funkcja celu w momencie $t$ jest postaci:
 
@@ -238,7 +253,7 @@ gdzie
 - $c$ - stała wynikająca z regularyzacji we wcześniejszych korkach, nie mająca wpływu
 na obecnym etapie
 
-## Uczenie wybór następnego drzewa w algorytmie II
+## Uczenie wybór następnego drzewa w algorytmie
 
 Naszym celem jest zminimalizowanie $O$ po $f_t$.
 
@@ -247,7 +262,7 @@ $$
   \sum_{i = 1} ^ n [2(y_i -  \hat{y_i}^{t-1})f_t(x_i) + f_t(x_i)^2 + (y_i -  \hat{y_i}^{t-1}) ^2] + \Omega(f_t) + c_1 = 
 $$
 
-## Uczenie wybór następnego drzewa w algorytmie II
+## Uczenie wybór następnego drzewa w algorytmie
 
 Ponieważ $(y_i -  \hat{y_i}^{t-1}) ^2$ to stała policzona w poprzednim kroku możemy zapisać powyższe jako
 
@@ -317,7 +332,7 @@ $$
   f_t(x_i)^2] + \Omega(f_t) + c_1
 $$
 
-## Nowa funkcja celu
+## Funkcja celu
 
 Po usunięciu stałych otrzymujemy
 
@@ -332,17 +347,21 @@ O^t \approx \sum_{i = 1}^n [2 (y_i - \hat{y_i}^{t-1}) f_t(x_i) + f_t(x_i)^2] + \
 $$
 
 
-## Powrót do funkcji celu 
+## Funkcja celu
+
+#### DEF Zbiór indeksów
 
 Zdefiniujmy zbiór wszystkich indeksów, należących do liścia $j$: 
 
 $$I_j = \{i|q(x_i) = j\}$$
 
-Ponieważ, każda pobserwacja jest jednoznacznie przypożądkowana do liścia, zachodzi następująca róWność
+#### UWAGA
+
+Ponieważ, każda obserwacja jest jednoznacznie przypożądkowana do liścia, zachodzi następująca róWność
 
 $$\sum_{i = 1}^n x_i = \sum_{i = j}^T \sum_{i \in I_j} x_i$$
 
-## Powrót do funkcji celu 
+## Funkcja celu
 
 Nasza obecna forma funkcji celu jest następująca
 
@@ -351,14 +370,16 @@ O^t \approx \sum_{i = 1}^n [f_t(x_i)g_i + \frac{1}{2}f_t(x_i)^2h_i] + \Omega(f_t
 \sum_{i = 1}^n [f_t(x_i)g_i + \frac{1}{2}f_t(x_i)^2h_i] + \gamma T + \frac{1}{2} \lambda \sum_{j = 1}^T w_j^2 =
 $$
 
-Następnie z definicj drzewa $f_t(x) = w_{q(x)}$
+Następnie z definicj drzewa $f_t(x) = w_{q_t(x)}$
 
 $$
-\sum_{i = 1}^n [w_{q(x_i)}g_i + \frac{1}{2}w_{q(x_i)}^2h_i] + \gamma T + \frac{1}{2} \lambda \sum_{j = 1}^T w_j^2
+\sum_{i = 1}^n [w_{q_t(x_i)}g_i + \frac{1}{2}w_{q_t(x_i)}^2h_i] + \gamma T + \frac{1}{2} \lambda \sum_{j = 1}^T w_j^2
 $$
-oraz z poprzedniej własności, oraz ponieważ w każdym liściu waga $w_\_$ jest taka sama mamy
 
-## Powrót do funkcji celu 
+## Funkcja celu
+
+Następnie z poprzedniej `UWAGI`, oraz ponieważ w danym liściu każda obserwacja 
+ma taką samą wagę $w_\_$ mamy
 
 $$
 \sum_{i = j}^T [(\sum_{i \in I_j} g_i) w_j + \frac{1}{2}(\sum_{i \in I_j} h_i)w_j^2] +
@@ -375,10 +396,12 @@ Niech
 $$
 f(x) = \frac{1}{2} a x ^ 2 + b x + c \quad c > 0
 $$
-Własności 1
+
+#### WŁASNOŚĆ
 
 $$argmin_x(f) = - \frac{b}{a}$$
-Istotnie 
+
+#### DOWÓD
 
 $$
 f`(x) = ax + b \\
@@ -387,20 +410,21 @@ $$
 
 ## Własności funkcji kwadratowej
 
-Własność 2
+#### WŁASNOŚĆ
 
 $$\min(f) = - \frac{1}{2}\frac{b^2}{a} + c$$
-Istotnie 
+
+#### DOWÓD
 
 $$
 f(argmin_x(f)) = \frac{1}{2} a argmin_x(f) ^ 2 + b argmin_x(f) + c = \\
-\frac{1}{2} a (- \frac{b}{a}) ^ 2 + b (- \frac{b}{a}) + c = \\
+\frac{1}{2} a (- \frac{b}{a}) ^ 2 + b (- \frac{b}{a}) + c = 
 \frac{1}{2} \frac{b^2}{a} - \frac{b^2}{a} + c  =  - \frac{1}{2}\frac{b^2}{a} + c
 $$
 
 ## Powrót do funkcji celu 
 
-Niech:
+Oznaczmy
 
 - $G_j = \sum_{i \in I_j} g_i$
 - $H_j = \sum_{i \in I_j} h_i$
@@ -411,22 +435,23 @@ $$
 \sum_{i = j}^T [G_j w_j + \frac{1}{2}(H_j + \lambda)w_j^2] + \gamma T
 $$
 
-## Powrót do funkcji celu 
+## Funkcja celu
 
-Załóżmy teraz, żę struktura drzewa jest $q(x)$ jeststała, wówczas optymalne wagi
+Załóżmy teraz, żę struktura drzewa $q(x)$ jest stała, wówczas optymalne wagi
 z własności funkcji kwadratowej są postaci $w_j^* = \frac{G_j}{H_j + \lambda}$. 
 Oraz wartość funkcji celu 
 
 $$
 O^t = -\sum_{i = j}^T \frac{G_j^2}{H_j + \lambda} + \gamma T
 $$
-Uwaga 
+
+#### UWAGA 
 
 $\sum_{i = j}^T \frac{G_j^2}{H_j + \lambda}$ ta wartość mówi jak dobra jest struktóa naszego drzewa
 
 ## Przykład
 
-Załóżmy, że mamy dżewo z trzema liśćmi. 
+Załóżmy, że mamy drzewo z trzema liśćmi. 
 
 liść                        |obserwcje w liściu|wartości parametrów
 ----------------------------|------------------|-------------------
@@ -443,11 +468,12 @@ $$
 O^t = -\sum_{i = j}^T \frac{G_j^2}{H_j + \lambda} + \gamma T
 $$
 
-- Weź to tą struktórę któa ma najmniejszą wartość funkcji celu
+- Weź tą struktórę która ma najmniejszą wartość funkcji celu
 
-$w_j^* = \frac{G_j}{H_j + \lambda}$
 
-- podejście jest słabe, jest bardzo dużo możliwych struktur
+#### UWAGA
+
+Podejście jest słabe, istnieje bardzo dużo możliwych struktur.
 
 ## Znjadowanie najlepszego drzewa w praktyce
 
@@ -463,11 +489,16 @@ $$
 
 ## Znjadowanie najlepszego drzewa w praktyce
 
-Uwaga 
+#### UWAGA 
 
-We wzorze na $Gain$ cztery komponenty to odpowiednio score lewego liścia, 
-score prawego liści, scor łączny, oraz koszt złożoności wynikający z dodatkowego liścia.
-Oczywiści podział warto rozważać tylko wtedy gdy $Gain$ jest dodatnie.
+We wzorze na $Gain$ cztery komponenty to odpowiednio 
+
+- score lewego liścia 
+- score prawego liścia
+- score łączny
+- koszt złożoności wynikający z dodatkowego liścia.
+
+Oczywiście podział warto rozważać tylko wtedy gdy $Gain$ jest dodatnie.
 
 ## Przykład
 
@@ -497,7 +528,7 @@ Gain = [\frac{G_L^2}{H_L + \lambda} + \frac{G_R^2}{H_R + \lambda} -
 \frac{(G_R + G_H)^2}{H_R + H_L + \lambda}] - \gamma
 $$
 
-## Podsumowanie - algorytm znajdowania najlepszego splita
+## Podsumowanie - algorytm znajdowania najlepszej strukury
 
 ```r
   for wezęzeł in wszystkie węzły:
@@ -508,8 +539,13 @@ $$
 ```
 ## Zmienne kategoryczne
 
+#### UWAGA
+
+Algorytm działą tylko dla zmiennych ciągłych. Możliwe rozwiązania
+
 - one-hot encoding
-- przypisanie każdej kategorii cyfry (tracimy część inforamcji)
+- przypisanie każdej kategorii cyfry (tracimy część inforamcji jeżeli w zmiennej
+kategorialnej nie da się określić relacji pożądku)
 
 ## Przygotowanie środowiska 
 
