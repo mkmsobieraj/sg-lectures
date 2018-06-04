@@ -154,7 +154,7 @@ mieć jak najczystsze liście więc im niższa tym lepiej
 #### UWAGA
 
 Jeżeli $P$ jest podziałem tylko na podzbiory czyste (posiadające tylko jedną kategorię) wówczas dla
-$i = 1 \dots k$, $S_i = 0$. Zatem redukcja entropi wynosi $IG(S, P) = H(S)$, a entropia
+$i = 1 \dots k$, $H(S_i) = 0$. Zatem redukcja entropi wynosi $IG(S, P) = H(S)$, a entropia
 nowego układu równa się $0$.
 
 
