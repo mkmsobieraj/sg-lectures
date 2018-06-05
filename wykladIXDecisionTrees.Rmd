@@ -83,6 +83,90 @@ ważona prawdopodobieństwem.
 
 ####UWAGA 
 
+Entropia jest wartością, mówiącą ile informacji niesie ze sobą zmienna. 
+
+##  Entropia
+
+##### Przykład 1
+
+Rozważmy dwa ciągi 0-1-nkowe generowane losowo.
+
+1. $P(X = 1) = 0.5, P(X = 0) = 0.5$: $10011100$
+2. $P(X = 1) = 0, P(X = 0) = 1$: $00000000$
+
+Ile pytań należy zadać by dowiedzieć się jaką postać mają powyższe ciągi?
+
+##  Entropia
+
+##### Przykład 2
+
+Rozważmy język, który składa się tylko z czterech liter A, B, C, D. Każda z liter
+występuje w języku z równą częstością. Wówczas możemy zakodować litery w następujący sposób:
+
+
+litera|prawdopodobieństwo |kodowanie
+------|-------------------|---------
+A     |0.25               |01
+B     |0.25               |00
+C     |0.25               |11
+D     |0.25               |10
+
+Ile średnio musimy przeznaczyć bitów na zakodowanie litery?
+
+$4 * 0.25 * 2 = 2$
+
+##  Entropia
+
+##### Przykład 3
+
+Rozważmy analogiczny przykład jak powyższy ale ze zmienioną częstością liter, ale analogicznym
+kodowaniem.
+
+
+litera|prawdopodobieństwo |kodowanie
+------|-------------------|---------
+A     |0.50               |01
+B     |0.25               |00
+C     |0.125              |11
+D     |0.125              |10
+
+Ile średnio musimy przeznaczyć bitów na zakodowanie litery?
+
+$0.5 * 2 + 0.25 * 2 + 2 * 0.125 * 2 = 2$
+
+##  Entropia
+
+##### Przykład 4
+
+Czy możemy poprawić kodowanie z $Przykładu 3$?
+
+Rozważmy 
+
+litera|prawdopodobieństwo |kodowanie
+------|-------------------|---------
+A     |0.50               |0
+B     |0.25               |10
+C     |0.125              |110
+D     |0.125              |111
+
+Wówczas 
+
+$0.5 * 1 + 0.25 * 2 + 2 * 0.125 * 3 = 1.75$
+
+##  Entropia
+
+Zauważmy, że:
+
+- $\log_2(\frac{1}{0.5}) = \log_2(2) = 1$
+- $\log_2(\frac{1}{0.25}) = \log_2(4) = 2$
+- $\log_2(\frac{1}{0.125}) = \log_2(8) = 3$
+
+
+
+## Entropia
+
+####UWAGA 
+
 Gdy mamy zbiór danych $S$, który zawiera $k$ kategorii, wówczas
 
 - prawdopodobieństwo kategorii $j$ wynosi $p_j = \frac{liczba\ wystąpień\ kategorii\ j}{liczność\ zbioru}$
