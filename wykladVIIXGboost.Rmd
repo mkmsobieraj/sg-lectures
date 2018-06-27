@@ -135,7 +135,7 @@ df2 %>%
 
 Niech
 
-- $x \in \mathbb{R}^n$ - obserwacja (wektor n zmiennych)
+- $x \in \mathbb{R}^d$ - obserwacja (wektor n zmiennych)
 - $w \in \mathbb{R}^T$ - wektor wag (scoringow)
 - $q: \mathbb{R}^d \rightarrow \{1 \dots T\}$ - struktóa drzewa (to co widzimy jako ify)
 
@@ -248,6 +248,11 @@ $$
   \sum_{i = 1}^n l(y_i, \hat{y}_i^{t-1} + f_t(x_i)) + \Omega(f_t) + c \rightarrow min
 $$
 
+<div class="notes">
+  Mogę traktować powyższą funkcje dwuwymairową jako jedno wymiarową, funkcję,
+  w której pierwszy argument to stała.
+</div>
+
 gdzie
 
 - $c$ - stała wynikająca z regularyzacji we wcześniejszych korkach, nie mająca wpływu
@@ -327,6 +332,12 @@ $$
 O^t \approx \sum_{i = 1}^n [f_t(x_i)g_i + \frac{1}{2}f_t(x_i)^2h_i] + \Omega(f_t)
 $$
 
+<div class="notes">
+  - $l(y_i, \hat{y}_i^{t-1})$ - wartość funkcji celu z poprzedniego stepu, obecnie znana stała
+  - $c_1$ - stała wynikająca z poprzednich regularyzacji
+</div>
+
+
 oraz dla błędu kwadratowego
 
 $$
@@ -404,7 +415,7 @@ $$\min(f) = - \frac{1}{2}\frac{b^2}{a} + c$$
 #### DOWÓD
 
 $$
-f(argmin_x(f)) = \frac{1}{2} a argmin_x(f) ^ 2 + b argmin_x(f) + c = \\
+f(argmin_x(f)) = \frac{1}{2} a\ argmin_x(f) ^ 2 + b\ argmin_x(f) + c = \\
 \frac{1}{2} a (- \frac{b}{a}) ^ 2 + b (- \frac{b}{a}) + c = 
 \frac{1}{2} \frac{b^2}{a} - \frac{b^2}{a} + c  =  - \frac{1}{2}\frac{b^2}{a} + c
 $$
@@ -471,7 +482,7 @@ Gain zdefiniujemy wzorem
 
 $$
 Gain = [\frac{G_L^2}{H_L + \lambda} + \frac{G_R^2}{H_R + \lambda} -
-\frac{(G_R + G_H)^2}{H_R + H_L + \lambda}] - \gamma
+\frac{(G_R + G_L)^2}{H_R + H_L + \lambda}] - \gamma
 $$
 
 #### Uwaga 
